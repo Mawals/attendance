@@ -1,73 +1,88 @@
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  // أدوات
-  const $  = (s) => document.querySelector(s);
-  const $$ = (s) => Array.from(document.querySelectorAll(s));
+document.addEventListener('DOMContentLoaded', function () {
+  // ========== إعدادات قابلة للتعديل ==========
+  // غيّر القيم هنا إن أردت تحميل فصل افتراضي آخر عند فتح الصفحة
+  const DEFAULT_GRADE   = '5';   // اكتب الرقم بالإنجليزية: '5'
+  const DEFAULT_SECTION = '1';   // اكتب الرقم بالإنجليزية: '1'
+
+  // اسم مجلد القوائم ونسق أسماء الملفات التي سيحاول السكربت تحميلها
+  const CLASSES_DIR = 'classes';
+  const FILENAME_PATTERNS = [
+    fname => `${CLASSES_DIR}/classes_from_${fname.grade}-${fname.section}_QA.json`,
+    fname => `${CLASSES_DIR}/classes_from_${fname.grade}-${fname.section}.json`,
+    fname => `${CLASSES_DIR}/${fname.grade}-${fname.section}.json`
+  ];
+  // ============================================
+
+  // عناصر الصفحة
+  const $  = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
   const gradeEl   = $('#gradeSelect');
   const sectionEl = $('#sectionSelect');
   const bodyEl    = $('#studentsBody');
+  const absEl     = $('#absCount');
+  const presEl    = $('#presCount');
 
+  // تحقق من وجود العناصر
   if (!gradeEl || !sectionEl || !bodyEl) {
-    console.error('لم أجد عناصر القوائم/الجدول. تأكد من وجود gradeSelect/sectionSelect/studentsBody في DOM.');
+    console.error('لم أجد عناصر gradeSelect أو sectionSelect أو studentsBody في DOM.');
     return;
   }
 
-  // الحالة العامة
-  window.state = {
+  // حالة الواجهة
+  const state = window.state = {
     classes: [],
     grade:  null,
     section:null,
-    attendance: {},
-    teacher: { id:'', name:'' }
+    attendance: {}
   };
 
-  // تبسيط تنسيقات
+  // تطبيع أي JSON إلى الشكل الموحد [{grade,section,students:[{id,name,phone}]}]
   function normalizeClassesJson(obj, g, s){
-    if (Array.isArray(obj)) {
-      if (obj.length && obj[0] && obj[0].students) return obj;
-      return [{
-        grade: g, section: s,
-        students: obj.map(x => ({
-          id:    x.id || x.student_id || crypto.randomUUID(),
-          name:  x.name || x.student_name || '',
-          phone: (x.phone || '').toString().replace(/\s+/g,'')
-        }))
-      }];
-    }
+    try {
+      if (Array.isArray(obj)) {
+        if (obj.length && obj[0] && obj[0].students) return obj;
+        return [{
+          grade: g, section: s,
+          students: obj.map(x => ({
+            id:    x.id || x.student_id || (crypto && crypto.randomUUID ? crypto.randomUUID() : `${g}-${s}-${Math.random().toString(36).slice(2,8)}`),
+            name:  x.name || x.student_name || '',
+            phone: String(x.phone || '').replace(/\s+/g,'')
+          }))
+        }];
+      }
+    } catch (e) { console.warn('normalize error', e); }
     return [{ grade:g, section:s, students: [] }];
   }
 
+  // تحديث العدادات
   function updateCounters(){
-    const grp  = (state.classes[0]) || {students:[]};
-    const list = grp.students || [];
-    let present=0, absent=0;
-    list.forEach(s => (state.attendance[s.id]===false ? absent++ : present++));
-    const abs = $('#absCount'), pres = $('#presCount');
-    if (abs)  abs.textContent  = absent;
-    if (pres) pres.textContent = present;
+    const list = (state.classes[0]?.students) || [];
+    let present = 0, absent = 0;
+    for (const st of list) {
+      if (state.attendance[st.id] === false) absent++; else present++;
+    }
+    if (absEl) absEl.textContent = absent;
+    if (presEl) presEl.textContent = present;
   }
 
+  // رسم جدول الطلبة
   function renderStudents(){
+    const list = (state.classes[0]?.students) || [];
     bodyEl.innerHTML = '';
-    const grp  = (state.classes[0]) || {students:[]};
-    const list = grp.students || [];
-
-    list.forEach((s,i)=>{
-      if(!(s.id in state.attendance)) state.attendance[s.id] = true; // حاضر افتراضيًا
+    list.forEach((s, i) => {
+      if (!(s.id in state.attendance)) state.attendance[s.id] = true; // حاضر افتراضياً
       const on = !!state.attendance[s.id];
       const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${i+1}</td>
-        <td>${s.name}</td>
-        <td>${s.phone || '<span style="color:#94a3b8">—</span>'}</td>
-        <td>
-          <div class="toggle" data-on="${on}" data-id="${s.id}">
-            <div class="knob"></div>
-          </div>
-        </td>`;
+      tr.innerHTML =
+        `<td>${i+1}</td>` +
+        `<td>${escapeHtml(s.name || '')}</td>` +
+        `<td>${s.phone ? escapeHtml(s.phone) : '<span style="color:#94a3b8">—</span>'}</td>` +
+        `<td><div class="toggle" data-on="${on}" data-id="${s.id}"><div class="knob"></div></div></td>`;
       bodyEl.appendChild(tr);
     });
 
+    // ربط أزرار التحويل لكل صف
     $$('#studentsBody .toggle').forEach(el => el.onclick = () => {
       const id = el.getAttribute('data-id');
       const on = el.getAttribute('data-on') === 'true';
@@ -79,49 +94,73 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCounters();
   }
 
+  // تحميل الملف بحسب نمط الأسماء
   async function loadSelectedClass(){
-    const g = gradeEl.value;
-    const s = sectionEl.value;
-    if (!g || !s) return;
+    try {
+      const g = String(gradeEl.value || '').trim();
+      const s = String(sectionEl.value || '').trim();
+      if (!g || !s) return;
 
-    const candidates = [
-      `classes/classes_from_${g}-${s}_QA.json`,
-      `classes/classes_from_${g}-${s}.json`,
-      `classes/${g}-${s}.json`
-    ];
-
-    for (const url of candidates) {
-      try {
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) continue;
-        const data = await res.json();
-        state.grade=g; state.section=s;
-        state.classes = normalizeClassesJson(data, g, s);
-        state.attendance = {};
-        renderStudents();
-        console.log('Loaded:', url);
-        return;
-      } catch (e) {
-        // جرّب التالي
+      const fname = { grade: g, section: s };
+      let loaded = false;
+      for (const pattern of FILENAME_PATTERNS) {
+        const url = pattern(fname);
+        try {
+          const res = await fetch(url, { cache: 'no-store' });
+          if (!res.ok) {
+            // console.log('not ok', url, res.status);
+            continue;
+          }
+          const data = await res.json();
+          state.grade = g; state.section = s;
+          state.classes = normalizeClassesJson(data, g, s);
+          state.attendance = {};
+          renderStudents();
+          console.log('Loaded:', url);
+          loaded = true;
+          break;
+        } catch (err) {
+          console.warn('fetch failed', url, err);
+        }
       }
-    }
 
-    // لو لم نجد ملفًا مناسبًا
-    bodyEl.innerHTML = `
-      <tr><td colspan="4" style="color:#fca5a5">
-        لم أجد ملف هذا الصف/الشعبة داخل <code>classes</code>.<br>
-        جُرّبت الأسماء: <code>${candidates.join('</code>, <code>')}</code>
-      </td></tr>`;
-    updateCounters();
+      if (!loaded) {
+        bodyEl.innerHTML =
+          `<tr><td colspan="4" style="color:#fca5a5">لم أجد ملف هذا الصف/الشعبة داخل <code>${CLASSES_DIR}</code>.<br>` +
+          `الاسم المتوقع (جرّب رفع أيٍ من): <code>${FILENAME_PATTERNS.map(fn => fn(fname)).join('</code>, <code>')}</code></td></tr>`;
+        updateCounters();
+      }
+    } catch (e) {
+      console.error('loadSelectedClass error', e);
+      alert('حدث خطأ أثناء التحميل — راجع Console.');
+    }
   }
 
-  // اربط الأحداث الآن (بعد توفر العناصر)
+  // حماية صغيرة: تأكد من أرقام إنجليزية في القوائم
+  function ensureEnglishDigits(el){
+    if (!el) return;
+    // استبدال الأرقام العربية بالإنجليزية إن وجد (محاولة آمنة)
+    el.addEventListener('change', () => {
+      if (!el.value) return;
+      const mapped = el.value.replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+      if (mapped !== el.value) el.value = mapped;
+    });
+  }
+  ensureEnglishDigits(gradeEl);
+  ensureEnglishDigits(sectionEl);
+
+  // ربط الأحداث
   gradeEl.addEventListener('change', loadSelectedClass);
   sectionEl.addEventListener('change', loadSelectedClass);
 
-  // تحميل تلقائي 5-1 عند الفتح
-  gradeEl.value   = '5';
-  sectionEl.value = '1';
+  // تحميل افتراضي عند الفتح (قابلة للتعديل عبر DEFAULT_GRADE/SECTION فوق)
+  gradeEl.value = DEFAULT_GRADE;
+  sectionEl.value = DEFAULT_SECTION;
   loadSelectedClass();
+
+  // ===== دوال مساعدة =====
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
 });
 </script>
