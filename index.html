@@ -1,116 +1,127 @@
 <script>
-// ====== أدوات بسيطة ======
-const $  = s => document.querySelector(s);
-const $$ = s => Array.from(document.querySelectorAll(s));
+document.addEventListener('DOMContentLoaded', () => {
+  // أدوات
+  const $  = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
+  const gradeEl   = $('#gradeSelect');
+  const sectionEl = $('#sectionSelect');
+  const bodyEl    = $('#studentsBody');
 
-// يحوّل JSON بأي شكل إلى الشكل الموحد [{grade,section,students:[{id,name,phone}]}]
-function normalizeClassesJson(obj, g, s){
-  if (Array.isArray(obj)) {
-    if (obj.length && obj[0]?.students) return obj; // الشكل الصحيح مباشرة
-    // مصفوفة طلاب فقط
-    return [{ grade: g, section: s, students: obj.map(x => ({
-      id: x.id || x.student_id || crypto.randomUUID(),
-      name: x.name || x.student_name || '',
-      phone: (x.phone || '').toString().replace(/\s+/g,'')
-    })) }];
-  }
-  return [];
-}
-
-// ارسم القائمة والعدادات (تُستخدم كما هي في صفحتك)
-function renderStudents(){
-  const body = $('#studentsBody'); body.innerHTML = '';
-  const grp  = (window.state?.classes?.[0]) || {students:[]};
-  const list = grp.students || [];
-  window.state = window.state || {attendance:{}};
-
-  list.forEach((s,i)=>{
-    if(!(s.id in state.attendance)) state.attendance[s.id] = true; // حاضر افتراضياً
-    const on = !!state.attendance[s.id];
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${i+1}</td>
-      <td>${s.name}</td>
-      <td>${s.phone || '<span style="color:#94a3b8">—</span>'}</td>
-      <td>
-        <div class="toggle" data-on="${on}" data-id="${s.id}">
-          <div class="knob"></div>
-        </div>
-      </td>`;
-    body.appendChild(tr);
-  });
-
-  $$('#studentsBody .toggle').forEach(el => el.onclick = () => {
-    const id = el.getAttribute('data-id');
-    const on = el.getAttribute('data-on') === 'true';
-    state.attendance[id] = !on;
-    el.setAttribute('data-on', String(!on));
-    updateCounters();
-  });
-
-  updateCounters();
-}
-
-function updateCounters(){
-  const grp  = (window.state?.classes?.[0]) || {students:[]};
-  const list = grp.students || [];
-  let present=0, absent=0;
-  list.forEach(s => (state.attendance[s.id]===false ? absent++ : present++));
-  $('#absCount').textContent  = absent;
-  $('#presCount').textContent = present;
-}
-
-// ====== التحميل التلقائي من /classes حسب الاختيار ======
-async function loadSelectedClass(){
-  const g = $('#gradeSelect').value;
-  const s = $('#sectionSelect').value;
-  if (!g || !s) return;
-
-  const candidates = [
-    `classes/classes_from_${g}-${s}_QA.json`,
-    `classes/classes_from_${g}-${s}.json`,
-    `classes/${g}-${s}.json`
-  ];
-
-  let loaded = false;
-  for (const url of candidates) {
-    try {
-      const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) continue;
-      const data = await res.json();
-      window.state = window.state || {};
-      state.grade = g; state.section = s;
-      state.classes = normalizeClassesJson(data, g, s);
-      state.attendance = {};
-      renderStudents();
-      // إشعار بسيط (اختياري)
-      if (window.toast) toast(`تم التحميل: ${g}-${s}`);
-      loaded = true;
-      break;
-    } catch (_) { /* جرّب التالي */ }
+  if (!gradeEl || !sectionEl || !bodyEl) {
+    console.error('لم أجد عناصر القوائم/الجدول. تأكد من وجود gradeSelect/sectionSelect/studentsBody في DOM.');
+    return;
   }
 
-  if (!loaded) {
-    const body = $('#studentsBody');
-    body.innerHTML = `<tr><td colspan="4" style="color:#fca5a5">
-      لم أجد ملف هذا الصف/الشعبة داخل <code>classes</code>.<br>
-      جرّبت الأسماء: <code>${candidates.join('</code>, <code>')}</code>
-    </td></tr>`;
+  // الحالة العامة
+  window.state = {
+    classes: [],
+    grade:  null,
+    section:null,
+    attendance: {},
+    teacher: { id:'', name:'' }
+  };
+
+  // تبسيط تنسيقات
+  function normalizeClassesJson(obj, g, s){
+    if (Array.isArray(obj)) {
+      if (obj.length && obj[0] && obj[0].students) return obj;
+      return [{
+        grade: g, section: s,
+        students: obj.map(x => ({
+          id:    x.id || x.student_id || crypto.randomUUID(),
+          name:  x.name || x.student_name || '',
+          phone: (x.phone || '').toString().replace(/\s+/g,'')
+        }))
+      }];
+    }
+    return [{ grade:g, section:s, students: [] }];
+  }
+
+  function updateCounters(){
+    const grp  = (state.classes[0]) || {students:[]};
+    const list = grp.students || [];
+    let present=0, absent=0;
+    list.forEach(s => (state.attendance[s.id]===false ? absent++ : present++));
+    const abs = $('#absCount'), pres = $('#presCount');
+    if (abs)  abs.textContent  = absent;
+    if (pres) pres.textContent = present;
+  }
+
+  function renderStudents(){
+    bodyEl.innerHTML = '';
+    const grp  = (state.classes[0]) || {students:[]};
+    const list = grp.students || [];
+
+    list.forEach((s,i)=>{
+      if(!(s.id in state.attendance)) state.attendance[s.id] = true; // حاضر افتراضيًا
+      const on = !!state.attendance[s.id];
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td>${s.name}</td>
+        <td>${s.phone || '<span style="color:#94a3b8">—</span>'}</td>
+        <td>
+          <div class="toggle" data-on="${on}" data-id="${s.id}">
+            <div class="knob"></div>
+          </div>
+        </td>`;
+      bodyEl.appendChild(tr);
+    });
+
+    $$('#studentsBody .toggle').forEach(el => el.onclick = () => {
+      const id = el.getAttribute('data-id');
+      const on = el.getAttribute('data-on') === 'true';
+      state.attendance[id] = !on;
+      el.setAttribute('data-on', String(!on));
+      updateCounters();
+    });
+
     updateCounters();
   }
-}
 
-// ====== ربط الأحداث (اختيار الصف/الشعبة) ======
-$('#gradeSelect').addEventListener('change', loadSelectedClass);
-$('#sectionSelect').addEventListener('change', loadSelectedClass);
+  async function loadSelectedClass(){
+    const g = gradeEl.value;
+    const s = sectionEl.value;
+    if (!g || !s) return;
 
-// ====== تحميل تلقائي 5-1 عند فتح الصفحة ======
-window.addEventListener('DOMContentLoaded', () => {
-  // تأكد أن القيم نصوص (1 وليس ١)
-  $('#gradeSelect').value   = '5';
-  $('#sectionSelect').value = '1';
-  // تهيئة حالة عامة
-  window.state = { classes: [], grade: '5', section: '1', attendance: {}, teacher: { id:'', name:'' } };
+    const candidates = [
+      `classes/classes_from_${g}-${s}_QA.json`,
+      `classes/classes_from_${g}-${s}.json`,
+      `classes/${g}-${s}.json`
+    ];
+
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) continue;
+        const data = await res.json();
+        state.grade=g; state.section=s;
+        state.classes = normalizeClassesJson(data, g, s);
+        state.attendance = {};
+        renderStudents();
+        console.log('Loaded:', url);
+        return;
+      } catch (e) {
+        // جرّب التالي
+      }
+    }
+
+    // لو لم نجد ملفًا مناسبًا
+    bodyEl.innerHTML = `
+      <tr><td colspan="4" style="color:#fca5a5">
+        لم أجد ملف هذا الصف/الشعبة داخل <code>classes</code>.<br>
+        جُرّبت الأسماء: <code>${candidates.join('</code>, <code>')}</code>
+      </td></tr>`;
+    updateCounters();
+  }
+
+  // اربط الأحداث الآن (بعد توفر العناصر)
+  gradeEl.addEventListener('change', loadSelectedClass);
+  sectionEl.addEventListener('change', loadSelectedClass);
+
+  // تحميل تلقائي 5-1 عند الفتح
+  gradeEl.value   = '5';
+  sectionEl.value = '1';
   loadSelectedClass();
 });
 </script>
