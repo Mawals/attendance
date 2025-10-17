@@ -31,6 +31,7 @@
     .toggle[data-on="true"] .knob{right:4px}
     .toggle[data-on="false"] .knob{right:34px}
     .muted{color:var(--muted)}
+    code{background:#0b1220;border:1px solid var(--border);border-radius:6px;padding:1px 6px}
   </style>
 </head>
 <body>
@@ -85,7 +86,7 @@
           </select>
         </div>
 
-        <!-- زر واضح لعرض الأسماء يدويًا + التحميل التلقائي موجود أيضًا -->
+        <!-- زر يدوي (اختياري) لعرض الأسماء إضافةً للتحميل التلقائي -->
         <div class="field" style="min-width:220px">
           <label class="muted">عرض الأسماء</label>
           <button id="loadBtn" class="primary" title="عرض الأسماء">
@@ -125,43 +126,49 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // إعدادات
+  // إعدادات افتراضية (أرقام إنجليزية)
   const DEFAULT_GRADE='5', DEFAULT_SECTION='1', CLASSES_DIR='classes';
-  const FILES=[
-    f=>`${CLASSES_DIR}/classes_from_${f.g}-${f.s}_QA.json`,
-    f=>`${CLASSES_DIR}/classes_from_${f.g}-${f.s}.json`,
-    f=>`${CLASSES_DIR}/${f.g}-${f.s}.json`
-  ];
   const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-  const state={classes:[],attendance:{},grade:null,section:null};
   const toEn=v=>String(v||'').replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).trim();
+  const state={classes:[],attendance:{},grade:null,section:null};
   const diag=$('#diag');
 
   // اليوم
   $('#today').textContent=new Intl.DateTimeFormat('ar',{dateStyle:'full'}).format(new Date());
 
-  // اسم المعلّم
+  // المعلّم
   const nameInp=$('#teacherNameInput'), idInp=$('#teacherIdInput'), tname=$('#tname'), tid=$('#tid');
   nameInp.addEventListener('input',()=>tname.textContent=nameInp.value.trim()||'—');
   idInp.addEventListener('input',()=>tid.textContent=idInp.value.trim()?`(${idInp.value.trim()})`:'');
-  const params=new URLSearchParams(location.search);
-  if(params.get('teacher_name')) nameInp.value=params.get('teacher_name');
-  if(params.get('teacher_id')) idInp.value=params.get('teacher_id');
-  tname.textContent=nameInp.value||'—'; tid.textContent=idInp.value?`(${idInp.value})`:'';
+  (function fromURL(){const p=new URLSearchParams(location.search); if(p.get('teacher_name')) nameInp.value=p.get('teacher_name'); if(p.get('teacher_id')) idInp.value=p.get('teacher_id'); tname.textContent=nameInp.value||'—'; tid.textContent=idInp.value?`(${idInp.value})`:'';})();
 
+  // مسارات ذكية: نسبية + مطلقة حسب GitHub Pages
+  function buildCandidates(g,s){
+    const base = location.href.replace(/[#?].*$/,'').replace(/[^/]*$/,'');
+    const rels = [
+      `${CLASSES_DIR}/classes_from_${g}-${s}_QA.json`,
+      `${CLASSES_DIR}/classes_from_${g}-${s}.json`,
+      `${CLASSES_DIR}/${g}-${s}.json`
+    ];
+    const abss = rels.map(r => new URL(r, base).href);
+    return [...rels, ...abss];
+  }
+
+  // تطبيع JSON
   function normalize(obj,g,s){
     if(Array.isArray(obj)){
       if(obj[0]?.students) return obj;
       return[{grade:g,section:s,students:obj.map((x,i)=>({
         id:x.id||x.student_id||`${g}-${s}-${i+1}`,
         name:(x.name||x.student_name||'').toString().trim(),
-        phone:String(x.phone||'').trim()
+        phone:String(x.phone||'').replace(/\s+/g,'')
       }))}];
     }
     return[];
   }
+
   const students=()=> state.classes[0]?.students||[];
-  function updateCount(){let p=0,a=0;for(const s of students())(state.attendance[s.id]===false?a:p)++;$('#absCount').textContent=a;$('#presCount').textContent=p;}
+  function updateCount(){let p=0,a=0;for(const st of students())(state.attendance[st.id]===false?a:p)++;$('#absCount').textContent=a;$('#presCount').textContent=p;}
   function render(){
     const body=$('#studentsBody'); body.innerHTML='';
     students().forEach((s,i)=>{
@@ -185,25 +192,70 @@ document.addEventListener('DOMContentLoaded', function () {
     const g=toEn($('#gradeSelect').value), s=toEn($('#sectionSelect').value);
     if(!g||!s){ $('#studentsBody').innerHTML='<tr><td colspan="4" class="muted">اختر الصف والشعبة لعرض الأسماء.</td></tr>'; updateCount(); return; }
     state.grade=g; state.section=s;
-    const tried=[]; let ok=false;
-    for(const f of FILES){
-      const url=f({g,s}); tried.push(url);
-      try{ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) continue;
-        const j=await r.json(); state.classes=normalize(j,g,s); state.attendance={}; render(); ok=true; diag.textContent=`تم التحميل من: ${url}`; break;
-      }catch(e){ /* جرّب التالي */ }
+
+    const candidates = buildCandidates(g,s);
+    let ok=false; const logs=[];
+    for(const url of candidates){
+      try{
+        const r=await fetch(url,{cache:'no-store'});
+        logs.push(`${url} → ${r.status}`);
+        if(!r.ok) continue;
+        const j=await r.json();
+        state.classes=normalize(j,g,s); state.attendance={}; render(); ok=true;
+        diag.innerHTML = `<b>تم التحميل:</b> <code>${url}</code>`;
+        break;
+      }catch(e){ logs.push(`${url} → ERROR`); }
     }
-    if(!ok){ $('#studentsBody').innerHTML=`<tr><td colspan="4" style="color:#fca5a5">لم أجد ملف هذا الصف/الشعبة داخل ${CLASSES_DIR}.</td></tr>`; diag.innerHTML=`<div>جربت:</div><code>${tried.join('</code><br><code>')}</code>`; updateCount(); }
+
+    if(!ok){
+      $('#studentsBody').innerHTML=`<tr><td colspan="4" style="color:#fca5a5">لم أجد ملف هذا الصف/الشعبة داخل <code>${CLASSES_DIR}</code>.</td></tr>`;
+      diag.innerHTML = `<div><b>تشخيص:</b></div><div style="font-family:monospace;line-height:1.6">${logs.join('<br>')}</div>
+        <div style="margin-top:6px">◀ ارفع واحدًا من الأسماء التالية بجانب <code>index.html</code>:
+        <div style="font-family:monospace"><code>${CLASSES_DIR}/classes_from_${g}-${s}_QA.json</code></div>
+        <div style="font-family:monospace"><code>${CLASSES_DIR}/classes_from_${g}-${s}.json</code></div>
+        <div style="font-family:monospace"><code>${CLASSES_DIR}/${g}-${s}.json</code></div></div>`;
+      updateCount();
+    }
   }
 
-  // زر الأيقونة “عرض الأسماء”
-  $('#loadBtn').onclick=load;
+  // الأزرار والأحداث
+  $('#loadBtn').onclick=load;                         // زر "عرض الأسماء"
+  $('#gradeSelect').addEventListener('change',load);  // تغيير الصف
+  $('#sectionSelect').addEventListener('change',load);// تغيير الشعبة
+  $('#markAllPresent').onclick=()=>{for(const s of students()) state.attendance[s.id]=true; render();};
+  $('#markAllAbsent').onclick =()=>{for(const s of students()) state.attendance[s.id]=false; render();};
 
-  // التحميل التلقائي عند تغيير الصف/الشعبة
-  $('#gradeSelect').addEventListener('change',load);
-  $('#sectionSelect').addEventListener('change',load);
+  // تصدير CSV (الغائبون فقط)
+  $('#btnExportAdmin').onclick=()=>{
+    const abs=students().filter(s=>state.attendance[s.id]===false);
+    if(!abs.length) return alert('لا يوجد غياب');
+    const dateISO=new Date().toISOString().slice(0,10);
+    const csv=['date,grade,section,student_id,student_name,phone']
+      .concat(abs.map(s=>[dateISO,state.grade,state.section,s.id,s.name,s.phone||''].map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')))
+      .join('\n');
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download=`غياب_${state.grade}-${state.section}_${dateISO}.csv`; a.click();
+  };
 
-  // تحميل 5/1 تلقائيًا عند الفتح
-  $('#gradeSelect').value='5'; $('#sectionSelect').value='1'; load();
+  // واتساب للغائبين
+  $('#btnWhatsapp').onclick=()=>{
+    const abs=students().filter(s=>state.attendance[s.id]===false);
+    if(!abs.length) return alert('لا يوجد غياب');
+    const fmt = new Intl.DateTimeFormat('ar',{dateStyle:'full'}).format(new Date());
+    const teacher = (nameInp.value||'المعلّم');
+    let opened=0;
+    for(const s of abs){
+      const p=(s.phone||'').replace(/[^\d]/g,''); if(!p) continue;
+      const msg=`السلام عليكم ولي أمر الطالب ${s.name}.\nتم تسجيل غياب ابنكم اليوم (${fmt}) عن الصف ${state.grade}/الشعبة ${state.section}.\n${teacher}.`;
+      window.open(`https://wa.me/${p}?text=${encodeURIComponent(msg)}`,'_blank'); opened++;
+    }
+    if(!opened) alert('لا توجد أرقام صالحة للغائبين');
+  };
+
+  // تحميل تلقائي 5/1 عند الفتح
+  $('#gradeSelect').value=DEFAULT_GRADE;
+  $('#sectionSelect').value=DEFAULT_SECTION;
+  load();
 });
 </script>
 </body>
