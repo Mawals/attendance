@@ -1,0 +1,18 @@
+[
+  {
+    "grade": 5,
+    "section": "1",
+    "students": [
+      {
+        "id": "5-1-001",
+        "name": "طالب 1",
+        "phone": "9689XXXXXXXX"
+      },
+      {
+        "id": "5-1-002",
+        "name": "طالب ٢",
+        "phone": "9689YYYYYYYY"
+      }
+    ]
+  }
+]
