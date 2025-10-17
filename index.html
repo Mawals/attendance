@@ -1,166 +1,215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>تسجيل غياب — رابط المعلّم</title>
+  <style>
+    :root {
+      --bg:#0b1320;--card:#0f172a;--muted:#94a3b8;
+      --border:#233044;--text:#e5e7eb;--ok:#16a34a;
+      --warn:#dc2626;--accent:#60a5fa
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#0b1320,#0d172a);
+      color:var(--text);font-family:"Tajawal",system-ui,Segoe UI,Roboto,sans-serif}
+    .app{max-width:1100px;margin:24px auto;padding:16px}
+    header{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+    .brand{display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .brand h1{font-size:20px;margin:0}
+    .badge{display:inline-flex;gap:6px;align-items:center;
+      border:1px solid var(--border);border-radius:999px;
+      padding:6px 10px;color:var(--muted)}
+    .card{background:var(--card);border:1px solid var(--border);
+      border-radius:16px;padding:16px;margin-top:12px}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:160px}
+    label{font-size:12px;color:var(--muted)}
+    select,input,button{background:#0b1220;border:1px solid var(--border);
+      color:var(--text);padding:10px 12px;border-radius:12px}
+    button{cursor:pointer}
+    button.primary{background:#0e1628}
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    th,td{text-align:right;padding:10px}
+    tbody tr{background:#0b1220;border:1px solid var(--border)}
+    tbody tr td:first-child{border-radius:10px 0 0 10px}
+    tbody tr td:last-child{border-radius:0 10px 10px 0}
+    .toggle{position:relative;width:62px;height:30px;border-radius:999px;
+      border:1px solid #334155;background:#172036;cursor:pointer;
+      display:inline-flex;align-items:center}
+    .knob{position:absolute;top:3px;bottom:3px;width:24px;
+      border-radius:999px;background:#e5e7eb;transition:.2s}
+    .toggle[data-on="true"]{background:#064e3b;border-color:#14532d}
+    .toggle[data-on="true"] .knob{right:4px}
+    .toggle[data-on="false"] .knob{right:34px}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+               xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 3l9 6-9 6-9-6 9-6z" stroke="#60a5fa" stroke-width="1.5"/>
+            <path d="M3 12l9 6 9-6" stroke="#60a5fa" stroke-opacity=".5"/>
+          </svg>
+          <h1>تسجيل غياب — رابط المعلّم</h1>
+        </div>
+        <div class="badge">
+          المعلّم: <strong id="tname">—</strong><span id="tid" style="margin-right:6px"></span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:6px">
+        <div class="field" style="min-width:220px">
+          <label>اسم المعلّم</label>
+          <input id="teacherNameInput" placeholder="اكتب اسمك" />
+        </div>
+        <div class="field" style="min-width:160px">
+          <label>معرّف المعلّم (اختياري)</label>
+          <input id="teacherIdInput" placeholder="مثال: t01" />
+        </div>
+      </div>
+    </header>
+
+    <div class="card">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <div class="field">
+          <label>اختر الصف</label>
+          <select id="gradeSelect">
+            <option value="">—</option>
+            <option value="5" selected>الصف 5</option>
+            <option value="6">الصف 6</option>
+            <option value="7">الصف 7</option>
+            <option value="8">الصف 8</option>
+            <option value="9">الصف 9</option>
+            <option value="10">الصف 10</option>
+            <option value="11">الصف 11</option>
+            <option value="12">الصف 12</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>اختر الشعبة</label>
+          <select id="sectionSelect">
+            <option value="">—</option>
+            <option value="1" selected>الشعبة 1</option>
+            <option value="2">الشعبة 2</option>
+            <option value="3">الشعبة 3</option>
+            <option value="4">الشعبة 4</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;color:var(--muted)">
+        <div>التاريخ: <strong id="today"></strong></div>
+        <div>الحضور الافتراضي: حاضر</div>
+        <div>الغائبون: <strong id="absCount" style="color:var(--warn)">0</strong></div>
+        <div>الحاضرون: <strong id="presCount" style="color:var(--ok)">0</strong></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>القائمة</div>
+        <div style="display:flex;gap:8px">
+          <button id="markAllPresent">الجميع حاضر</button>
+          <button id="markAllAbsent">الجميع غائب</button>
+        </div>
+      </div>
+      <table style="margin-top:10px">
+        <thead>
+          <tr><th>#</th><th>اسم الطالب</th><th>الهاتف</th><th>الحالة</th></tr>
+        </thead>
+        <tbody id="studentsBody"></tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button id="btnExportAdmin">تنزيل CSV (الغائبون)</button>
+        <button id="btnWhatsapp">واتساب لأولياء الأمور</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // ========== إعدادات قابلة للتعديل ==========
-  // غيّر القيم هنا إن أردت تحميل فصل افتراضي آخر عند فتح الصفحة
-  const DEFAULT_GRADE   = '5';   // اكتب الرقم بالإنجليزية: '5'
-  const DEFAULT_SECTION = '1';   // اكتب الرقم بالإنجليزية: '1'
-
-  // اسم مجلد القوائم ونسق أسماء الملفات التي سيحاول السكربت تحميلها
-  const CLASSES_DIR = 'classes';
-  const FILENAME_PATTERNS = [
-    fname => `${CLASSES_DIR}/classes_from_${fname.grade}-${fname.section}_QA.json`,
-    fname => `${CLASSES_DIR}/classes_from_${fname.grade}-${fname.section}.json`,
-    fname => `${CLASSES_DIR}/${fname.grade}-${fname.section}.json`
+  const DEFAULT_GRADE='5', DEFAULT_SECTION='1', CLASSES_DIR='classes';
+  const FILES=[
+    f=>`${CLASSES_DIR}/classes_from_${f.g}-${f.s}_QA.json`,
+    f=>`${CLASSES_DIR}/classes_from_${f.g}-${f.s}.json`,
+    f=>`${CLASSES_DIR}/${f.g}-${f.s}.json`
   ];
-  // ============================================
+  const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+  const state={classes:[],attendance:{}};
 
-  // عناصر الصفحة
-  const $  = (sel) => document.querySelector(sel);
-  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
-  const gradeEl   = $('#gradeSelect');
-  const sectionEl = $('#sectionSelect');
-  const bodyEl    = $('#studentsBody');
-  const absEl     = $('#absCount');
-  const presEl    = $('#presCount');
+  $('#today').textContent=new Intl.DateTimeFormat('ar',{dateStyle:'full'}).format(new Date());
+  const nameInp=$('#teacherNameInput'), idInp=$('#teacherIdInput'),
+        tname=$('#tname'), tid=$('#tid');
+  nameInp.addEventListener('input',()=>tname.textContent=nameInp.value.trim()||'—');
+  idInp.addEventListener('input',()=>tid.textContent=idInp.value.trim()?`(${idInp.value.trim()})`:'');
+  const params=new URLSearchParams(location.search);
+  if(params.get('teacher_name')) nameInp.value=params.get('teacher_name');
+  if(params.get('teacher_id')) idInp.value=params.get('teacher_id');
+  tname.textContent=nameInp.value||'—'; tid.textContent=idInp.value?`(${idInp.value})`:'';
 
-  // تحقق من وجود العناصر
-  if (!gradeEl || !sectionEl || !bodyEl) {
-    console.error('لم أجد عناصر gradeSelect أو sectionSelect أو studentsBody في DOM.');
-    return;
+  function normalize(obj,g,s){
+    if(Array.isArray(obj)){
+      if(obj[0]?.students) return obj;
+      return[{grade:g,section:s,students:obj.map((x,i)=>({
+        id:x.id||x.student_id||crypto.randomUUID(),
+        name:x.name||x.student_name||'',
+        phone:(x.phone||'').toString().trim()
+      }))}];
+    }
+    return[];
   }
-
-  // حالة الواجهة
-  const state = window.state = {
-    classes: [],
-    grade:  null,
-    section:null,
-    attendance: {}
+  function students(){return state.classes[0]?.students||[];}
+  function updateCount(){
+    let p=0,a=0;for(const s of students())(state.attendance[s.id]===false?a:p)++;
+    $('#absCount').textContent=a;$('#presCount').textContent=p;
+  }
+  function render(){
+    const body=$('#studentsBody');body.innerHTML='';
+    for(const [i,s] of students().entries()){
+      if(!(s.id in state.attendance))state.attendance[s.id]=true;
+      const on=!!state.attendance[s.id];
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${i+1}</td><td>${s.name}</td><td>${s.phone||'<span style="color:#94a3b8">—</span>'}</td>
+      <td><div class="toggle" data-on="${on}" data-id="${s.id}"><div class="knob"></div></div></td>`;
+      body.appendChild(tr);
+    }
+    $$('#studentsBody .toggle').forEach(el=>el.onclick=()=>{
+      const id=el.dataset.id;const on=el.dataset.on==='true';
+      state.attendance[id]=!on;el.dataset.on=!on;updateCount();
+    });
+    updateCount();
+  }
+  async function load(){
+    const g=$('#gradeSelect').value,s=$('#sectionSelect').value;if(!g||!s)return;
+    for(const f of FILES){try{
+      const u=f({g,s});const r=await fetch(u,{cache:'no-store'});if(!r.ok)continue;
+      const j=await r.json();state.classes=normalize(j,g,s);state.attendance={};
+      render();console.log('Loaded',u);return;
+    }catch{}}$('#studentsBody').innerHTML=`<tr><td colspan="4" style="color:#fca5a5">لا يوجد ملف لهذا الصف/الشعبة داخل ${CLASSES_DIR}</td></tr>`;
+    updateCount();
+  }
+  $('#gradeSelect').onchange=load;$('#sectionSelect').onchange=load;
+  $('#markAllPresent').onclick=()=>{for(const s of students())state.attendance[s.id]=true;render();};
+  $('#markAllAbsent').onclick=()=>{for(const s of students())state.attendance[s.id]=false;render();};
+  $('#btnExportAdmin').onclick=()=>{
+    const abs=students().filter(s=>state.attendance[s.id]===false);
+    if(!abs.length)return alert('لا يوجد غياب');
+    const csv=['date,student_name,phone'].concat(abs.map(s=>[new Date().toISOString().slice(0,10),s.name,s.phone].join(','))).join('\n');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download=`غياب_${$('#gradeSelect').value}-${$('#sectionSelect').value}.csv`;a.click();
   };
-
-  // تطبيع أي JSON إلى الشكل الموحد [{grade,section,students:[{id,name,phone}]}]
-  function normalizeClassesJson(obj, g, s){
-    try {
-      if (Array.isArray(obj)) {
-        if (obj.length && obj[0] && obj[0].students) return obj;
-        return [{
-          grade: g, section: s,
-          students: obj.map(x => ({
-            id:    x.id || x.student_id || (crypto && crypto.randomUUID ? crypto.randomUUID() : `${g}-${s}-${Math.random().toString(36).slice(2,8)}`),
-            name:  x.name || x.student_name || '',
-            phone: String(x.phone || '').replace(/\s+/g,'')
-          }))
-        }];
-      }
-    } catch (e) { console.warn('normalize error', e); }
-    return [{ grade:g, section:s, students: [] }];
-  }
-
-  // تحديث العدادات
-  function updateCounters(){
-    const list = (state.classes[0]?.students) || [];
-    let present = 0, absent = 0;
-    for (const st of list) {
-      if (state.attendance[st.id] === false) absent++; else present++;
+  $('#btnWhatsapp').onclick=()=>{
+    const abs=students().filter(s=>state.attendance[s.id]===false);
+    for(const s of abs){if(!s.phone)continue;
+      const msg=`السلام عليكم ولي أمر الطالب ${s.name}. تم تسجيل غياب ابنكم اليوم.`;
+      window.open(`https://wa.me/${s.phone}?text=${encodeURIComponent(msg)}`,'_blank');
     }
-    if (absEl) absEl.textContent = absent;
-    if (presEl) presEl.textContent = present;
-  }
-
-  // رسم جدول الطلبة
-  function renderStudents(){
-    const list = (state.classes[0]?.students) || [];
-    bodyEl.innerHTML = '';
-    list.forEach((s, i) => {
-      if (!(s.id in state.attendance)) state.attendance[s.id] = true; // حاضر افتراضياً
-      const on = !!state.attendance[s.id];
-      const tr = document.createElement('tr');
-      tr.innerHTML =
-        `<td>${i+1}</td>` +
-        `<td>${escapeHtml(s.name || '')}</td>` +
-        `<td>${s.phone ? escapeHtml(s.phone) : '<span style="color:#94a3b8">—</span>'}</td>` +
-        `<td><div class="toggle" data-on="${on}" data-id="${s.id}"><div class="knob"></div></div></td>`;
-      bodyEl.appendChild(tr);
-    });
-
-    // ربط أزرار التحويل لكل صف
-    $$('#studentsBody .toggle').forEach(el => el.onclick = () => {
-      const id = el.getAttribute('data-id');
-      const on = el.getAttribute('data-on') === 'true';
-      state.attendance[id] = !on;
-      el.setAttribute('data-on', String(!on));
-      updateCounters();
-    });
-
-    updateCounters();
-  }
-
-  // تحميل الملف بحسب نمط الأسماء
-  async function loadSelectedClass(){
-    try {
-      const g = String(gradeEl.value || '').trim();
-      const s = String(sectionEl.value || '').trim();
-      if (!g || !s) return;
-
-      const fname = { grade: g, section: s };
-      let loaded = false;
-      for (const pattern of FILENAME_PATTERNS) {
-        const url = pattern(fname);
-        try {
-          const res = await fetch(url, { cache: 'no-store' });
-          if (!res.ok) {
-            // console.log('not ok', url, res.status);
-            continue;
-          }
-          const data = await res.json();
-          state.grade = g; state.section = s;
-          state.classes = normalizeClassesJson(data, g, s);
-          state.attendance = {};
-          renderStudents();
-          console.log('Loaded:', url);
-          loaded = true;
-          break;
-        } catch (err) {
-          console.warn('fetch failed', url, err);
-        }
-      }
-
-      if (!loaded) {
-        bodyEl.innerHTML =
-          `<tr><td colspan="4" style="color:#fca5a5">لم أجد ملف هذا الصف/الشعبة داخل <code>${CLASSES_DIR}</code>.<br>` +
-          `الاسم المتوقع (جرّب رفع أيٍ من): <code>${FILENAME_PATTERNS.map(fn => fn(fname)).join('</code>, <code>')}</code></td></tr>`;
-        updateCounters();
-      }
-    } catch (e) {
-      console.error('loadSelectedClass error', e);
-      alert('حدث خطأ أثناء التحميل — راجع Console.');
-    }
-  }
-
-  // حماية صغيرة: تأكد من أرقام إنجليزية في القوائم
-  function ensureEnglishDigits(el){
-    if (!el) return;
-    // استبدال الأرقام العربية بالإنجليزية إن وجد (محاولة آمنة)
-    el.addEventListener('change', () => {
-      if (!el.value) return;
-      const mapped = el.value.replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
-      if (mapped !== el.value) el.value = mapped;
-    });
-  }
-  ensureEnglishDigits(gradeEl);
-  ensureEnglishDigits(sectionEl);
-
-  // ربط الأحداث
-  gradeEl.addEventListener('change', loadSelectedClass);
-  sectionEl.addEventListener('change', loadSelectedClass);
-
-  // تحميل افتراضي عند الفتح (قابلة للتعديل عبر DEFAULT_GRADE/SECTION فوق)
-  gradeEl.value = DEFAULT_GRADE;
-  sectionEl.value = DEFAULT_SECTION;
-  loadSelectedClass();
-
-  // ===== دوال مساعدة =====
-  function escapeHtml(str){
-    return String(str).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  }
+  };
+  $('#gradeSelect').value=DEFAULT_GRADE;$('#sectionSelect').value=DEFAULT_SECTION;load();
 });
 </script>
+</body>
+</html>
