@@ -19,6 +19,7 @@
     select,input,button{background:#0b1220;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:12px}
     button{cursor:pointer}
     button.primary{background:#0e1628}
+    .stats{display:flex;gap:10px;flex-wrap:wrap}
     .badge{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:999px;padding:6px 10px;color:var(--muted)}
     table{width:100%;border-collapse:separate;border-spacing:0 8px}
     th,td{text-align:right;padding:10px}
@@ -40,8 +41,16 @@
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l9 6-9 6-9-6 9-6z" stroke="#60a5fa" stroke-width="1.5"/><path d="M3 12l9 6 9-6" stroke="#60a5fa" stroke-opacity=".5"/></svg>
         <h1>تسجيل غياب — رابط المعلّم</h1>
       </div>
-      <div class="row">
+      <div class="row" style="gap:12px;align-items:center">
         <div class="badge">المعلّم: <strong id="tname">—</strong><span id="tid" style="margin-right:6px"></span></div>
+        <div class="field" style="min-width:220px">
+          <label>اسم المعلّم</label>
+          <input id="teacherNameInput" placeholder="اكتب اسمك" />
+        </div>
+        <div class="field" style="min-width:180px">
+          <label>معرّف المعلّم (اختياري)</label>
+          <input id="teacherIdInput" placeholder="مثال: t01" />
+        </div>
       </div>
     </header>
 
@@ -49,38 +58,42 @@
       <div class="row">
         <div class="field">
           <label>اختر الصف</label>
-          <select id="gradeSelect">
-            <option value="">—</option>
-            <option value="5" selected>الصف 5</option>
-            <option value="6">الصف 6</option>
-            <option value="7">الصف 7</option>
-            <option value="8">الصف 8</option>
-            <option value="9">الصف 9</option>
-            <option value="10">الصف 10</option>
-            <option value="11">الصف 11</option>
-            <option value="12">الصف 12</option>
+          <select id=\"gradeSelect\">
+            <option value=\"\">—</option>
+            <option value=\"5\" selected>الصف 5</option>
+            <option value=\"6\">الصف 6</option>
+            <option value=\"7\">الصف 7</option>
+            <option value=\"8\">الصف 8</option>
+            <option value=\"9\">الصف 9</option>
+            <option value=\"10\">الصف 10</option>
+            <option value=\"11\">الصف 11</option>
+            <option value=\"12\">الصف 12</option>
           </select>
         </div>
         <div class="field">
           <label>اختر الشعبة</label>
-          <select id="sectionSelect">
-            <option value="">—</option>
-            <option value="1" selected>الشعبة 1</option>
-            <option value="2">الشعبة 2</option>
-            <option value="3">الشعبة 3</option>
-            <option value="4">الشعبة 4</option>
+          <select id=\"sectionSelect\">
+            <option value=\"\">—</option>
+            <option value=\"1\" selected>الشعبة 1</option>
+            <option value=\"2\">الشعبة 2</option>
+            <option value=\"3\">الشعبة 3</option>
+            <option value=\"4\">الشعبة 4</option>
           </select>
         </div>
         <div class="field" style="min-width:220px">
           <label>تحميل القائمة</label>
           <button class="primary" id="loadClassBtn">تحميل من المجلد /classes</button>
         </div>
+        <div class="field" style="min-width:220px">
+          <label>بدلاً من ذلك (ملف محلي)</label>
+          <input type="file" id="classesFile" accept=".json,.csv" />
+        </div>
       </div>
       <div class="row" style="margin-top:10px">
         <div class="badge">التاريخ: <strong id="today"></strong></div>
         <div class="badge">الحضور الافتراضي: حاضر</div>
-        <div class="badge">الغائبون: <strong id="absCount" style="color:#dc2626">0</strong></div>
-        <div class="badge">الحاضرون: <strong id="presCount" style="color:#16a34a">0</strong></div>
+        <div class="badge">الغائبون: <strong id="absCount" style="color:var(--warn)">0</strong></div>
+        <div class="badge">الحاضرون: <strong id="presCount" style="color:var(--ok)">0</strong></div>
       </div>
     </div>
 
@@ -100,7 +113,7 @@
         <button id="btnExportAdmin">تنزيل CSV (الغائبون)</button>
         <button id="btnWhatsapp">واتساب لأولياء الأمور (الغائبون)</button>
       </div>
-      <div style="color:#94a3b8;margin-top:8px">ملاحظة: التحميل من المجلد يعتمد على تسمية الملفات بالشكل <code>classes_from_{g}-{s}_QA.json</code> داخل مجلد <code>/classes</code>.</div>
+      <div style="color:var(--muted);margin-top:8px">ملاحظة: التحميل من المجلد يعتمد على تسمية الملفات بالشكل <code>classes_from_{g}-{s}_QA.json</code> داخل مجلد <code>/classes</code>.</div>
     </div>
   </div>
 
@@ -112,12 +125,19 @@ const $=s=>document.querySelector(s); const $$=s=>Array.from(document.querySelec
 const fmtDate = d => new Intl.DateTimeFormat('ar',{dateStyle:'full'}).format(d);
 const toast = (m)=>{const t=$('#toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2200)}
 
-// بيانات المعلّم من الرابط + قيمة افتراضية
+// التقاط بيانات المعلم من باراميترات الرابط
 const params = new URLSearchParams(location.search);
 state.teacher.id = params.get('teacher_id')||'';
-state.teacher.name = params.get('teacher_name')||'أ. محمد'; // الاسم الافتراضي
+state.teacher.name = params.get('teacher_name')||'';
 $('#tid').textContent = state.teacher.id? '('+state.teacher.id+')':'';
-$('#tname').textContent = state.teacher.name;
+$('#tname').textContent = state.teacher.name||'—';
+// ربط حقول الإدخال
+const nameInput = document.getElementById('teacherNameInput');
+const idInput = document.getElementById('teacherIdInput');
+nameInput.value = state.teacher.name;
+idInput.value = state.teacher.id;
+nameInput.addEventListener('input', ()=>{ state.teacher.name = nameInput.value.trim(); $('#tname').textContent = state.teacher.name||'—'; });
+idInput.addEventListener('input', ()=>{ state.teacher.id = idInput.value.trim(); $('#tid').textContent = state.teacher.id? '('+state.teacher.id+')':''; });
 
 $('#today').textContent = fmtDate(new Date());
 
@@ -125,7 +145,7 @@ function renderStudents(){
   const body = $('#studentsBody'); body.innerHTML='';
   const list = currentStudents();
   list.forEach((s,i)=>{
-    if(!(s.id in state.attendance)) state.attendance[s.id] = true;
+    if(!(s.id in state.attendance)) state.attendance[s.id] = true; // حاضر افتراضياً
     const on = !!state.attendance[s.id];
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${i+1}</td><td>${s.name}</td><td>${s.phone||'<span style="color:#94a3b8">—</span>'}</td>
@@ -145,28 +165,35 @@ function updateCounters(){
 }
 
 function currentStudents(){
+  // state.classes يمكن أن تكون: [ {grade, section, students:[...] } ] أو مباشرة مصفوفة الطلاب
   if(Array.isArray(state.classes)){
     if(state.classes.length && state.classes[0].students){
+      // ابحث عن المجموعة المطابقة للصف والشعبة
       const g = Number(state.grade), sec = String(state.section);
       const grp = state.classes.find(c => Number(c.grade)===g && String(c.section)===sec) || state.classes[0];
       return grp.students || [];
-    } else { return state.classes; }
+    } else {
+      // قد يكون الملف مباشرة مصفوفة طلاب
+      return state.classes;
+    }
   }
   return [];
 }
 
 function normalizeClassesJson(obj){
+  // يحوّل البُنى المختلفة إلى شكل موحّد [{grade,section,students:[{id,name,phone}]}]
   if(Array.isArray(obj)){
     if(obj.length && obj[0].students){ return obj }
+    // إذا كان مصفوفة طلاب فقط
     return [{ grade: state.grade, section: state.section, students: obj.map(x=>({id:x.id||x.student_id||crypto.randomUUID(), name:x.name||x.student_name||'', phone:x.phone||''})) }]
   }
   return [];
 }
 
-// تحميل من /classes مع أسماء بديلة
+// تحميل من المجلد /classes
 async function loadSelectedClass(){
   const g = $('#gradeSelect').value, s = $('#sectionSelect').value;
-  if(!g || !s) return;
+  if(!g || !s) { return; }
   const candidates = [
     `classes/classes_from_${g}-${s}_QA.json`,
     `classes/classes_from_${g}-${s}.json`,
@@ -176,18 +203,63 @@ async function loadSelectedClass(){
   for(const url of candidates){
     try{
       const res = await fetch(url, {cache:'no-store'});
-      if(!res.ok) throw new Error(res.status);
+      if(!res.ok) continue;
       const j = await res.json();
       state.grade = g; state.section = s; state.classes = normalizeClassesJson(j); state.attendance = {};
-      renderStudents(); toast(`تم التحميل: ${url}`); loaded = true; break;
-    }catch(err){ /* try next */ }
+      renderStudents(); toast(`تم التحميل: ${g}-${s}`); loaded = true; break;
+    }catch(_){}
   }
-  if(!loaded){ alert('تعذر تحميل ملف القائمة. تأكد من وجوده داخل مجلد classes باسم مناسب.'); }
+  if(!loaded){
+    const body = $('#studentsBody');
+    body.innerHTML = `<tr><td colspan="4" style="color:#fca5a5">لا يوجد ملف لهذا الصف/الشعبة داخل مجلد <code>classes</code>. الاسم المتوقع: <code>classes_from_${g}-${s}_QA.json</code></td></tr>`;
+    updateCounters();
+  }
 }
 
 $('#loadClassBtn').onclick = loadSelectedClass;
 $('#gradeSelect').addEventListener('change', loadSelectedClass);
 $('#sectionSelect').addEventListener('change', loadSelectedClass);
+
+// حمّل تلقائيًا 5-1 عند فتح الصفحة
+window.addEventListener('DOMContentLoaded', ()=>{
+  $('#gradeSelect').value='5'; $('#sectionSelect').value='1'; loadSelectedClass();
+}); });
+
+// تحميل يدوي (JSON/CSV)
+$('#classesFile').addEventListener('change', async (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const ext = f.name.split('.').pop().toLowerCase();
+  if(ext==='json'){
+    const text = await f.text(); const j = JSON.parse(text);
+    state.classes = normalizeClassesJson(j);
+    // حاول استنتاج الصف/الشعبة من اسم الملف
+    const m = f.name.match(/(\d+)\s*[-_ ]\s*([0-9\u0600-\u06FF]+)/); if(m){ state.grade=m[1]; state.section=m[2]; $('#gradeSelect').value=m[1]; $('#sectionSelect').value=m[2]; }
+    renderStudents(); toast('تم تحميل JSON');
+  } else if(ext==='csv'){
+    const text = await f.text();
+    // بسيط: توقع الأعمدة: grade,section,student_id,student_name,phone
+    const lines = text.split(/\r?\n/).filter(Boolean); const headers = lines[0].split(',').map(h=>h.trim());
+    const idx = {
+      grade: headers.findIndex(h=>/grade|الصف/i.test(h)),
+      section: headers.findIndex(h=>/section|الشعبة/i.test(h)),
+      id: headers.findIndex(h=>/student_id|id|الرقم/i.test(h)),
+      name: headers.findIndex(h=>/student_name|name|الاسم/i.test(h)),
+      phone: headers.findIndex(h=>/phone|الهاتف|جوال/i.test(h))
+    };
+    const rows = lines.slice(1).map(r=> r.split(',')).map(v=>({
+      grade: v[idx.grade]||$('#gradeSelect').value,
+      section: v[idx.section]||$('#sectionSelect').value,
+      id: v[idx.id]||crypto.randomUUID(),
+      name: v[idx.name]||'',
+      phone: (v[idx.phone]||'').replace(/\s+/g,'')
+    }));
+    state.grade = $('#gradeSelect').value; state.section = $('#sectionSelect').value;
+    state.classes = [{ grade: state.grade, section: state.section, students: rows.map(r=>({id:r.id,name:r.name,phone:r.phone})) }];
+    renderStudents(); toast('تم تحميل CSV');
+  } else {
+    alert('صيغة غير مدعومة');
+  }
+});
 
 // أزرار جماعية
 $('#markAllPresent').onclick = ()=>{ for(const s of currentStudents()) state.attendance[s.id]=true; renderStudents(); };
@@ -199,24 +271,19 @@ $('#btnExportAdmin').onclick = ()=>{
   if(!abs.length) return alert('لا يوجد غياب');
   const cols = ['date','teacher_id','teacher_name','grade','section','student_id','student_name','phone'];
   const dateISO = new Date().toISOString().slice(0,10);
-  const csv = [cols.join(',')].concat(abs.map(s=> [dateISO, state.teacher.id, state.teacher.name, state.grade, state.section, s.id, s.name, s.phone||''].map(x=> '"'+String(x).replace(/"/g,'""')+'"').join(','))).join('\n');
+  const csv = [cols.join(',')].concat(abs.map(s=> [dateISO, state.teacher.id, state.teacher.name, state.grade, state.section, s.id, s.name, s.phone||''].map(x=>'"'+(x??'').toString().replace(/"/g,'""')+'"').join(','))).join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `غياب_${state.grade}-${state.section}_${dateISO}.csv`; a.click(); URL.revokeObjectURL(a.href);
 };
 
-// واتساب للغائبين
+// فتح واتساب للغائبين
 $('#btnWhatsapp').onclick = ()=>{
   const abs = currentStudents().filter(s=> state.attendance[s.id]===false);
   if(!abs.length) return alert('لا يوجد غياب');
-  const msg = (s)=>`السلام عليكم ولي أمر الطالب/ة ${s.name}.\nنُفيدكم بغياب ابنكم/ابنتكم اليوم (${fmtDate(new Date())}) عن ${state.grade}/${state.section}.\nالمعلّم: ${state.teacher.name}.`;
+  const msg = (s)=>`السلام عليكم ولي أمر الطالب/ة ${s.name}.\nنُفيدكم بغياب ابنكم/ابنتكم اليوم (${fmtDate(new Date())}) عن ${state.grade}/${state.section}.\nالمعلم: ${state.teacher.name}.`;
   let opened=0; for(const s of abs){ const p=(s.phone||'').replace(/[^\d]/g,''); if(!p) continue; const url=`https://wa.me/${p}?text=${encodeURIComponent(msg(s))}`; window.open(url,'_blank'); opened++; }
   if(!opened) alert('لا توجد أرقام صالحة للغائبين');
 };
-
-// تحميل تلقائي 5-1 عند فتح الصفحة
-window.addEventListener('DOMContentLoaded', ()=>{
-  $('#gradeSelect').value='5'; $('#sectionSelect').value='1'; loadSelectedClass();
-});
 </script>
 </body>
 </html>
