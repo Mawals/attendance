@@ -3,260 +3,226 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>تسجيل غياب — رابط المعلّم</title>
+  <title>نموذج المخالفات — ربط تلقائي بالأسماء (صف ⇢ شعبة ⇢ اسم)</title>
   <style>
-    :root{--bg:#0b1320;--card:#0f172a;--muted:#94a3b8;--border:#233044;--text:#e5e7eb;--ok:#16a34a;--warn:#dc2626;--accent:#60a5fa}
-    *{box-sizing:border-box}
-    body{margin:0;background:linear-gradient(180deg,#0b1320,#0d172a);color:var(--text);font-family:"Tajawal",system-ui,Segoe UI,Roboto,sans-serif}
-    .app{max-width:1100px;margin:24px auto;padding:16px}
-    header{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
-    .brand{display:flex;gap:10px;align-items:center;justify-content:space-between}
-    .brand h1{font-size:20px;margin:0}
-    .badge{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:999px;padding:6px 10px;color:var(--muted)}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:12px}
-    .field{display:flex;flex-direction:column;gap:6px;min-width:160px}
-    label{font-size:12px;color:var(--muted)}
-    select,input,button{background:#0b1220;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:12px}
-    button{cursor:pointer}
-    button.primary{background:#0e1628;display:inline-flex;gap:8px;align-items:center}
-    button.primary svg{flex:0 0 auto}
-    table{width:100%;border-collapse:separate;border-spacing:0 8px}
-    th,td{text-align:right;padding:10px}
-    tbody tr{background:#0b1220;border:1px solid var(--border)}
-    tbody tr td:first-child{border-radius:10px 0 0 10px}
-    tbody tr td:last-child{border-radius:0 10px 10px 0}
-    .toggle{position:relative;width:62px;height:30px;border-radius:999px;border:1px solid #334155;background:#172036;cursor:pointer;display:inline-flex;align-items:center}
-    .knob{position:absolute;top:3px;bottom:3px;width:24px;border-radius:999px;background:#e5e7eb;transition:.2s}
-    .toggle[data-on="true"]{background:#064e3b;border-color:#14532d}
-    .toggle[data-on="true"] .knob{right:4px}
-    .toggle[data-on="false"] .knob{right:34px}
-    .muted{color:var(--muted)}
-    code{background:#0b1220;border:1px solid var(--border);border-radius:6px;padding:1px 6px}
+    :root{--c:#2563eb}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f5f7fb;margin:0;padding:24px}
+    .wrap{max-width:900px;margin:0 auto}
+    .card{background:#fff;border-radius:14px;box-shadow:0 6px 22px rgba(0,0,0,.08);padding:18px 18px 22px;margin-bottom:16px}
+    h1{font-size:20px;margin:0 0 10px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .grid-1{grid-template-columns:1fr}
+    label{font-size:13px;margin-bottom:6px;display:block}
+    select,input,textarea{width:100%;padding:10px 12px;border:1px solid #e3e6ef;border-radius:10px;background:#fafbff}
+    select:disabled{background:#f2f4f8;color:#999}
+    textarea{min-height:90px;resize:vertical}
+    .muted{font-size:12px;color:#6b7280}
+    .row{display:flex;gap:10px;align-items:center}
+    .btn{border:0;background:var(--c);color:#fff;border-radius:10px;padding:12px 18px;font-weight:600;cursor:pointer}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    #toast{display:none;background:#111;color:#fff;padding:10px 14px;border-radius:10px;position:fixed;bottom:18px;inset-inline:18px auto;z-index:999}
+    .pill{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;background:#eef2ff;color:#283b7b;font-size:12px}
+    .note{font-size:12px;color:#374151;background:#f9fafb;border:1px dashed #e5e7eb;border-radius:10px;padding:10px}
   </style>
+  <script>
+    const GAS_URL   = 'https://script.google.com/macros/s/AKfycbxbM7zmeN1gW_ryUSVdTkI8XKkMFyICb2RYbjwBIzc5Hean6J35BI9efjODhvdlnw/exec';
+    const SHEET_ID  = '1c_nu-7OnT5eK03wonJXoIeg2k8--ivJS';
+
+    const $  = (s,c=document)=>c.querySelector(s);
+    const $$ = (s,c=document)=>Array.from(c.querySelectorAll(s));
+    function toast(m){ const t=$('#toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2000); }
+    function clearAll(){
+      const f=$('#dataForm'); if(f) f.reset();
+      ($('[name="اسم الطالب"]'))?.dispatchEvent(new Event('change',{bubbles:true}));
+      ($('[name="الصف الدراسي"]'))?.dispatchEvent(new Event('change',{bubbles:true}));
+      ($('[name="الشعبة"]'))?.dispatchEvent(new Event('change',{bubbles:true}));
+      $('#guardianPhone').textContent = '—';
+    }
+
+    async function fetchStudentsGViz(gid){
+      const url = gid ?
+        `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${gid}` :
+        `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq`;
+      const resp = await fetch(url);
+      const text = await resp.text();
+      const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}')+1));
+      const labels = json.table.cols.map(c => (c && c.label) ? String(c.label).trim() : '');
+      const rows = (json.table.rows||[]).map(r => (r.c||[]).map(c => c ? c.v : ''));
+      return rows.map(arr => { const o={}; labels.forEach((lab,i)=>{ o[lab] = (arr[i]==null?'':arr[i]); }); return o; });
+    }
+
+    const DB = { raw:[], byGrade:{}, byGradeSection:{}, teachers:[] };
+
+    function buildIndexes(){
+      DB.byGrade = {};
+      DB.byGradeSection = {};
+      const teachersSet = new Set();
+      DB.raw.forEach(rec => {
+        const teacher = String(rec['المعلم']||'').trim();
+        const grade   = String(rec['الصف']||'').trim();
+        const section = String(rec['الشعبة']||'').trim();
+        const name    = String(rec['اسم الطالب']||'').trim();
+        const phone   = String(rec['رقم ولي الأمر']||'').trim();
+        if(teacher) teachersSet.add(teacher);
+        if(!grade) return;
+        if(!DB.byGrade[grade]) DB.byGrade[grade] = new Set();
+        if(section) DB.byGrade[grade].add(section);
+        const key = grade + '::' + section;
+        if(!DB.byGradeSection[key]) DB.byGradeSection[key] = [];
+        if(name) DB.byGradeSection[key].push({name, phone, teacher});
+      });
+      DB.teachers = Array.from(teachersSet).sort((a,b)=>a.localeCompare(b,'ar'));
+      Object.keys(DB.byGrade).forEach(g => DB.byGrade[g] = Array.from(DB.byGrade[g]).sort((a,b)=>a.localeCompare(b,'ar')));
+    }
+
+    function fillGradeOptions(){
+      const sel = $('[name="الصف الدراسي"]');
+      const grades = Object.keys(DB.byGrade).sort((a,b)=>a.localeCompare(b,'ar'));
+      sel.innerHTML = '<option value="">اختر...</option>' + grades.map(g => `<option>${g}</option>`).join('');
+      sel.disabled = false;
+      fillSectionOptions('');
+      fillStudentOptions('','');
+    }
+
+    function fillSectionOptions(grade){
+      const sel = $('[name="الشعبة"]');
+      if(!grade){ sel.innerHTML = '<option value="">اختر الصف أولاً…</option>'; sel.disabled=true; return; }
+      const sections = DB.byGrade[grade] || [];
+      sel.innerHTML = '<option value="">اختر...</option>' + sections.map(s => `<option>${s}</option>`).join('');
+      sel.disabled = sections.length===0;
+      fillStudentOptions(grade, '');
+    }
+
+    function fillStudentOptions(grade, section){
+      const sel = $('[name="اسم الطالب"]');
+      const key = grade + '::' + section;
+      const list = DB.byGradeSection[key] || [];
+      if(!grade || !section || list.length===0){
+        sel.innerHTML = '<option value="">اختر الصف ثم الشعبة…</option>';
+        sel.disabled = true;
+        $('#guardianPhone').textContent = '—';
+        return;
+      }
+      sel.innerHTML = '<option value="">اختر...</option>' + list.map(s => `<option value="${s.name}" data-phone="${s.phone}">${s.name}</option>`).join('');
+      sel.disabled = false;
+      $('#guardianPhone').textContent = '—';
+    }
+
+    function onStudentChange(){
+      const opt = $('[name="اسم الطالب"] option:checked');
+      const phone = opt ? (opt.getAttribute('data-phone')||'') : '';
+      $('#guardianPhone').textContent = phone || '—';
+      $('[name="رقم ولي الأمر"]').value = phone || '';
+    }
+
+    async function sendToSupervisor(){
+      const btn = $('#sendBtn'); btn.disabled = true;
+      try{
+        const data = Object.fromEntries(new FormData($('#dataForm')).entries());
+        const req = ['الصف الدراسي','الشعبة','اسم الطالب','اسم المعلم أو الإداري','التخصص'];
+        const miss = req.filter(k => !data[k] || String(data[k]).trim()==='');
+        if(miss.length){ alert('يرجى تعبئة: '+miss.join('، ')); btn.disabled=false; return; }
+        const payload = {
+          'اسم الطالب': data['اسم الطالب']||'',
+          'الصف': data['الصف الدراسي']||'',
+          'الشعبة': data['الشعبة']||'',
+          'المخالفة': data['المخالفات الطلابية']||'',
+          'اسم المعلم أو الإداري': data['اسم المعلم أو الإداري']||'',
+          'التخصص': data['التخصص']||'',
+          'ملاحظات أخرى': data['ملاحظات أخرى']||'',
+          'رقم ولي الأمر': data['رقم ولي الأمر']||''
+        };
+        const res = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) });
+        let ok=false; let j=null;
+        if(res.type==='opaque'){ ok=true; } else { try{ j=await res.json(); }catch(_){} ok = !!(res.ok && j && (j.status==='ok' || j.status==='success')); }
+        if(ok){ toast('تم الإرسال للمشرف ✅'); clearAll(); } else { alert('تعذر الإرسال — تأكد من صلاحيات Web App'); }
+      }catch(e){ alert('خطأ أثناء الإرسال: '+e); }
+      finally{ btn.disabled=false; }
+    }
+
+    document.addEventListener('DOMContentLoaded', async()=>{
+      try{
+        DB.raw = await fetchStudentsGViz();
+        buildIndexes();
+        const teacherSel = $('[name="اسم المعلم أو الإداري"]');
+        teacherSel.innerHTML = '<option value="">اختر...</option>' + DB.teachers.map(t=>`<option>${t}</option>`).join('');
+        fillGradeOptions();
+      }catch(e){
+        console.error(e);
+        alert('تعذر تحميل بيانات الأسماء من الشيت. تأكد أن رابط المشاركة Anyone with the link: Viewer');
+      }
+      $('[name="الصف الدراسي"]').addEventListener('change', e=>{ fillSectionOptions(e.target.value); });
+      $('[name="الشعبة"]').addEventListener('change', e=>{ fillStudentOptions($('[name="الصف الدراسي"]').value, e.target.value); });
+      $('[name="اسم الطالب"]').addEventListener('change', onStudentChange);
+      $('#dataForm').addEventListener('submit', e=>{ e.preventDefault(); sendToSupervisor(); });
+      $('#sendBtn').addEventListener('click', e=>{ e.preventDefault(); sendToSupervisor(); });
+    });
+  </script>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div class="brand">
-        <div style="display:flex;align-items:center;gap:8px">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 3l9 6-9 6-9-6 9-6z" stroke="#60a5fa" stroke-width="1.5"/><path d="M3 12l9 6 9-6" stroke="#60a5fa" stroke-opacity=".5"/>
-          </svg>
-          <h1>تسجيل غياب — رابط المعلّم</h1>
-        </div>
-        <div class="badge">المعلّم: <strong id="tname">—</strong><span id="tid" style="margin-right:6px"></span></div>
-      </div>
-
-      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:6px">
-        <div class="field" style="min-width:220px">
-          <label>اسم المعلّم</label>
-          <input id="teacherNameInput" placeholder="اكتب اسمك" />
-        </div>
-        <div class="field" style="min-width:160px">
-          <label>معرّف المعلّم (اختياري)</label>
-          <input id="teacherIdInput" placeholder="مثال: t01" />
-        </div>
-      </div>
-    </header>
-
+  <div class="wrap">
     <div class="card">
-      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-        <div class="field">
-          <label>اختر الصف</label>
-          <select id="gradeSelect">
-            <option value="">—</option>
-            <option value="5" selected>الصف 5</option>
-            <option value="6">الصف 6</option>
-            <option value="7">الصف 7</option>
-            <option value="8">الصف 8</option>
-            <option value="9">الصف 9</option>
-            <option value="10">الصف 10</option>
-            <option value="11">الصف 11</option>
-            <option value="12">الصف 12</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>اختر الشعبة</label>
-          <select id="sectionSelect">
-            <option value="">—</option>
-            <option value="1" selected>الشعبة 1</option>
-            <option value="2">الشعبة 2</option>
-            <option value="3">الشعبة 3</option>
-            <option value="4">الشعبة 4</option>
-          </select>
+      <h1>نموذج المخالفات — اختيار (صف ⇢ شعبة ⇢ اسم)</h1>
+      <p class="note">يتم تحميل <strong>الأسماء وأرقام أولياء الأمور</strong> آليًا من Google Sheet المربوط. اختر الصف ثم الشعبة ثم الاسم، وسيظهر رقم ولي الأمر آليًا ويُرسل ضمن البيانات.</p>
+      <form id="dataForm">
+        <div class="grid">
+          <div>
+            <label>الصف الدراسي</label>
+            <select name="الصف الدراسي" required disabled>
+              <option>جاري التحميل…</option>
+            </select>
+          </div>
+          <div>
+            <label>الشعبة</label>
+            <select name="الشعبة" required disabled>
+              <option>اختر الصف أولًا…</option>
+            </select>
+          </div>
+          <div>
+            <label>اسم الطالب</label>
+            <select name="اسم الطالب" required disabled>
+              <option>اختر الصف ثم الشعبة…</option>
+            </select>
+          </div>
+          <div>
+            <label>اسم المعلم أو الإداري</label>
+            <select name="اسم المعلم أو الإداري" required>
+              <option>جاري التحميل…</option>
+            </select>
+          </div>
+          <div>
+            <label>المخالفات الطلابية</label>
+            <select name="المخالفات الطلابية">
+              <option value="">اختر...</option>
+              <option>تأخير</option>
+              <option>غياب</option>
+              <option>سلوك</option>
+            </select>
+          </div>
+          <div>
+            <label>التخصص</label>
+            <input name="التخصص" placeholder="مثال: Math / Science" required />
+          </div>
         </div>
 
-        <!-- زر يدوي (اختياري) لعرض الأسماء إضافةً للتحميل التلقائي -->
-        <div class="field" style="min-width:220px">
-          <label class="muted">عرض الأسماء</label>
-          <button id="loadBtn" class="primary" title="عرض الأسماء">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s4-8 9-8 9 8 9 8-4 8-9 8-9-8-9-8Z"/><circle cx="12" cy="12" r="3"/></svg>
-            عرض الأسماء
-          </button>
+        <div class="grid grid-1" style="margin-top:12px">
+          <div>
+            <label>رقم ولي الأمر (يُعبأ تلقائيًا)</label>
+            <div class="pill"><span>📞</span><span id="guardianPhone">—</span></div>
+            <input type="hidden" name="رقم ولي الأمر" value="">
+          </div>
+          <div>
+            <label>ملاحظات أخرى</label>
+            <textarea name="ملاحظات أخرى" placeholder="اختياري"></textarea>
+          </div>
         </div>
-      </div>
 
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;color:var(--muted)">
-        <div>التاريخ: <strong id="today"></strong></div>
-        <div>الحضور الافتراضي: حاضر</div>
-        <div>الغائبون: <strong id="absCount" style="color:var(--warn)">0</strong></div>
-        <div>الحاضرون: <strong id="presCount" style="color:var(--ok)">0</strong></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>القائمة</div>
-        <div style="display:flex;gap:8px">
-          <button id="markAllPresent">الجميع حاضر</button>
-          <button id="markAllAbsent">الجميع غائب</button>
+        <div class="row" style="margin-top:14px">
+          <button id="sendBtn" type="submit" class="btn">حفظ/إرسال للمشرف</button>
         </div>
-      </div>
-      <table style="margin-top:10px">
-        <thead><tr><th>#</th><th>اسم الطالب</th><th>الهاتف</th><th>الحالة</th></tr></thead>
-        <tbody id="studentsBody"></tbody>
-      </table>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-        <button id="btnExportAdmin">تنزيل CSV (الغائبون)</button>
-        <button id="btnWhatsapp">واتساب لأولياء الأمور</button>
-      </div>
-      <div id="diag" class="muted" style="margin-top:10px;font-size:12px"></div>
+      </form>
     </div>
   </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  // إعدادات افتراضية (أرقام إنجليزية)
-  const DEFAULT_GRADE='5', DEFAULT_SECTION='1', CLASSES_DIR='classes';
-  const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-  const toEn=v=>String(v||'').replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).trim();
-  const state={classes:[],attendance:{},grade:null,section:null};
-  const diag=$('#diag');
-
-  // اليوم
-  $('#today').textContent=new Intl.DateTimeFormat('ar',{dateStyle:'full'}).format(new Date());
-
-  // المعلّم
-  const nameInp=$('#teacherNameInput'), idInp=$('#teacherIdInput'), tname=$('#tname'), tid=$('#tid');
-  nameInp.addEventListener('input',()=>tname.textContent=nameInp.value.trim()||'—');
-  idInp.addEventListener('input',()=>tid.textContent=idInp.value.trim()?`(${idInp.value.trim()})`:'');
-  (function fromURL(){const p=new URLSearchParams(location.search); if(p.get('teacher_name')) nameInp.value=p.get('teacher_name'); if(p.get('teacher_id')) idInp.value=p.get('teacher_id'); tname.textContent=nameInp.value||'—'; tid.textContent=idInp.value?`(${idInp.value})`:'';})();
-
-  // مسارات ذكية: نسبية + مطلقة حسب GitHub Pages
-  function buildCandidates(g,s){
-    const base = location.href.replace(/[#?].*$/,'').replace(/[^/]*$/,'');
-    const rels = [
-      `${CLASSES_DIR}/classes_from_${g}-${s}_QA.json`,
-      `${CLASSES_DIR}/classes_from_${g}-${s}.json`,
-      `${CLASSES_DIR}/${g}-${s}.json`
-    ];
-    const abss = rels.map(r => new URL(r, base).href);
-    return [...rels, ...abss];
-  }
-
-  // تطبيع JSON
-  function normalize(obj,g,s){
-    if(Array.isArray(obj)){
-      if(obj[0]?.students) return obj;
-      return[{grade:g,section:s,students:obj.map((x,i)=>({
-        id:x.id||x.student_id||`${g}-${s}-${i+1}`,
-        name:(x.name||x.student_name||'').toString().trim(),
-        phone:String(x.phone||'').replace(/\s+/g,'')
-      }))}];
-    }
-    return[];
-  }
-
-  const students=()=> state.classes[0]?.students||[];
-  function updateCount(){let p=0,a=0;for(const st of students())(state.attendance[st.id]===false?a:p)++;$('#absCount').textContent=a;$('#presCount').textContent=p;}
-  function render(){
-    const body=$('#studentsBody'); body.innerHTML='';
-    students().forEach((s,i)=>{
-      if(!(s.id in state.attendance)) state.attendance[s.id]=true;
-      const on=!!state.attendance[s.id];
-      const tr=document.createElement('tr');
-      tr.innerHTML=`<td>${i+1}</td><td>${s.name}</td><td>${s.phone||'<span class="muted">—</span>'}</td>
-      <td><div class="toggle" data-on="${on}" data-id="${s.id}"><div class="knob"></div></div></td>`;
-      body.appendChild(tr);
-    });
-    $$('#studentsBody .toggle').forEach(el=>el.onclick=()=>{
-      const id=el.dataset.id; const on=el.dataset.on==='true';
-      state.attendance[id]=!on; el.dataset.on=String(!on);
-      const knob=el.querySelector('.knob'); if(knob) knob.style.right = (!on?'4px':'34px');
-      updateCount();
-    });
-    updateCount();
-  }
-
-  async function load(){
-    const g=toEn($('#gradeSelect').value), s=toEn($('#sectionSelect').value);
-    if(!g||!s){ $('#studentsBody').innerHTML='<tr><td colspan="4" class="muted">اختر الصف والشعبة لعرض الأسماء.</td></tr>'; updateCount(); return; }
-    state.grade=g; state.section=s;
-
-    const candidates = buildCandidates(g,s);
-    let ok=false; const logs=[];
-    for(const url of candidates){
-      try{
-        const r=await fetch(url,{cache:'no-store'});
-        logs.push(`${url} → ${r.status}`);
-        if(!r.ok) continue;
-        const j=await r.json();
-        state.classes=normalize(j,g,s); state.attendance={}; render(); ok=true;
-        diag.innerHTML = `<b>تم التحميل:</b> <code>${url}</code>`;
-        break;
-      }catch(e){ logs.push(`${url} → ERROR`); }
-    }
-
-    if(!ok){
-      $('#studentsBody').innerHTML=`<tr><td colspan="4" style="color:#fca5a5">لم أجد ملف هذا الصف/الشعبة داخل <code>${CLASSES_DIR}</code>.</td></tr>`;
-      diag.innerHTML = `<div><b>تشخيص:</b></div><div style="font-family:monospace;line-height:1.6">${logs.join('<br>')}</div>
-        <div style="margin-top:6px">◀ ارفع واحدًا من الأسماء التالية بجانب <code>index.html</code>:
-        <div style="font-family:monospace"><code>${CLASSES_DIR}/classes_from_${g}-${s}_QA.json</code></div>
-        <div style="font-family:monospace"><code>${CLASSES_DIR}/classes_from_${g}-${s}.json</code></div>
-        <div style="font-family:monospace"><code>${CLASSES_DIR}/${g}-${s}.json</code></div></div>`;
-      updateCount();
-    }
-  }
-
-  // الأزرار والأحداث
-  $('#loadBtn').onclick=load;                         // زر "عرض الأسماء"
-  $('#gradeSelect').addEventListener('change',load);  // تغيير الصف
-  $('#sectionSelect').addEventListener('change',load);// تغيير الشعبة
-  $('#markAllPresent').onclick=()=>{for(const s of students()) state.attendance[s.id]=true; render();};
-  $('#markAllAbsent').onclick =()=>{for(const s of students()) state.attendance[s.id]=false; render();};
-
-  // تصدير CSV (الغائبون فقط)
-  $('#btnExportAdmin').onclick=()=>{
-    const abs=students().filter(s=>state.attendance[s.id]===false);
-    if(!abs.length) return alert('لا يوجد غياب');
-    const dateISO=new Date().toISOString().slice(0,10);
-    const csv=['date,grade,section,student_id,student_name,phone']
-      .concat(abs.map(s=>[dateISO,state.grade,state.section,s.id,s.name,s.phone||''].map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')))
-      .join('\n');
-    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-    a.download=`غياب_${state.grade}-${state.section}_${dateISO}.csv`; a.click();
-  };
-
-  // واتساب للغائبين
-  $('#btnWhatsapp').onclick=()=>{
-    const abs=students().filter(s=>state.attendance[s.id]===false);
-    if(!abs.length) return alert('لا يوجد غياب');
-    const fmt = new Intl.DateTimeFormat('ar',{dateStyle:'full'}).format(new Date());
-    const teacher = (nameInp.value||'المعلّم');
-    let opened=0;
-    for(const s of abs){
-      const p=(s.phone||'').replace(/[^\d]/g,''); if(!p) continue;
-      const msg=`السلام عليكم ولي أمر الطالب ${s.name}.\nتم تسجيل غياب ابنكم اليوم (${fmt}) عن الصف ${state.grade}/الشعبة ${state.section}.\n${teacher}.`;
-      window.open(`https://wa.me/${p}?text=${encodeURIComponent(msg)}`,'_blank'); opened++;
-    }
-    if(!opened) alert('لا توجد أرقام صالحة للغائبين');
-  };
-
-  // تحميل تلقائي 5/1 عند الفتح
-  $('#gradeSelect').value=DEFAULT_GRADE;
-  $('#sectionSelect').value=DEFAULT_SECTION;
-  load();
-});
-</script>
+  <div id="toast"></div>
 </body>
 </html>
