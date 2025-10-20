@@ -14,12 +14,23 @@
     .pill { margin-top: 10px; background: #eef2ff; padding: 8px 12px; display: inline-block; border-radius: 20px; font-size: 14px; }
   </style>
   <script>
-    const STUDENTS_SHEET_ID = "1c_nu-7OnT5eK03wonJXoIeg2k8--ivJS";
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpYkLDu5kwHXqoqZ9WPonUBDVrrbF3eo4hSAiuQosDnrYcrepDiSvTs6o2gBFrAQ/pub?gid=626465739&single=true&output=csv";
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxbM7zmeN1gW_ryUSVdTkI8XKkMFyICb2RYbjwBIzc5Hean6J35BI9efjODhvdlnw/exec";
 
     let studentData = [];
 
     async function fetchStudentData() {
+      const res = await fetch(CSV_URL);
+      const text = await res.text();
+      const lines = text.trim().split("\n");
+      const headers = lines[0].split(",");
+      studentData = lines.slice(1).map(row => {
+        const values = row.split(",");
+        const entry = {};
+        headers.forEach((h, i) => entry[h.trim()] = values[i] ? values[i].trim() : "");
+        return entry;
+      });
+    }
       const url = `https://docs.google.com/spreadsheets/d/${STUDENTS_SHEET_ID}/gviz/tq?tqx=out:json`;
       const res = await fetch(url);
       const txt = await res.text();
@@ -99,8 +110,15 @@
 
       <label>الصف الدراسي</label>
       <select id="grade" required>
-        <option value="">اختر الصف</option>
-      </select>
+<option>5</option>
+<option>6</option>
+<option>7</option>
+<option>8</option>
+<option>9</option>
+<option>10</option>
+<option>11</option>
+<option>12</option>
+</select>
 
       <label>الشعبة</label>
       <select id="section" required disabled>
