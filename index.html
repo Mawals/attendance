@@ -61,11 +61,11 @@
       const students = studentData.filter(s => s["الصف"] === grade && s["الشعبة"] === section);
       const studentSelect = document.getElementById("student");
       studentSelect.innerHTML = '<option value="">اختر اسم الطالب</option>' +
-        students.map(s => `<option value="${s["اسم الطالب"]}" data-phone="${s["رقم ولي الأمر"]}">${s["اسم الطالب"]}</option>`).join("");
+        students.map(s => `<option value="${s["الاسم"]}" data-phone="${s["رقم الهاتف"]}">${s["الاسم"]}</option>`).join("");
       studentSelect.disabled = students.length === 0;
       document.getElementById("guardian").textContent = "—";
     }
-    " data-phone="${s["رقم ولي الأمر"]}">${s["اسم الطالب"]}</option>`).join("");
+    " data-phone="${s["رقم الهاتف"]}">${s["الاسم"]}</option>`).join("");
       document.getElementById("guardian").textContent = "—";
     }
 
