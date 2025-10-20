@@ -1,228 +1,132 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>نموذج المخالفات — ربط تلقائي بالأسماء (صف ⇢ شعبة ⇢ اسم)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نموذج تسجيل مخالفة</title>
   <style>
-    :root{--c:#2563eb}
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f5f7fb;margin:0;padding:24px}
-    .wrap{max-width:900px;margin:0 auto}
-    .card{background:#fff;border-radius:14px;box-shadow:0 6px 22px rgba(0,0,0,.08);padding:18px 18px 22px;margin-bottom:16px}
-    h1{font-size:20px;margin:0 0 10px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .grid-1{grid-template-columns:1fr}
-    label{font-size:13px;margin-bottom:6px;display:block}
-    select,input,textarea{width:100%;padding:10px 12px;border:1px solid #e3e6ef;border-radius:10px;background:#fafbff}
-    select:disabled{background:#f2f4f8;color:#999}
-    textarea{min-height:90px;resize:vertical}
-    .muted{font-size:12px;color:#6b7280}
-    .row{display:flex;gap:10px;align-items:center}
-    .btn{border:0;background:var(--c);color:#fff;border-radius:10px;padding:12px 18px;font-weight:600;cursor:pointer}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-    #toast{display:none;background:#111;color:#fff;padding:10px 14px;border-radius:10px;position:fixed;bottom:18px;inset-inline:18px auto;z-index:999}
-    .pill{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;background:#eef2ff;color:#283b7b;font-size:12px}
-    .note{font-size:12px;color:#374151;background:#f9fafb;border:1px dashed #e5e7eb;border-radius:10px;padding:10px}
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; direction: rtl; }
+    .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h1 { font-size: 22px; margin-bottom: 20px; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    select, input, textarea { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #ccc; }
+    button { margin-top: 20px; background: #2563eb; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
+    .pill { margin-top: 10px; background: #eef2ff; padding: 8px 12px; display: inline-block; border-radius: 20px; font-size: 14px; }
   </style>
   <script>
-    const GAS_URL   = 'https://script.google.com/macros/s/AKfycbxbM7zmeN1gW_ryUSVdTkI8XKkMFyICb2RYbjwBIzc5Hean6J35BI9efjODhvdlnw/exec';
-    const SHEET_ID  = '1c_nu-7OnT5eK03wonJXoIeg2k8--ivJS';
+    const STUDENTS_SHEET_ID = "1c_nu-7OnT5eK03wonJXoIeg2k8--ivJS";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxbM7zmeN1gW_ryUSVdTkI8XKkMFyICb2RYbjwBIzc5Hean6J35BI9efjODhvdlnw/exec";
 
-    const $  = (s,c=document)=>c.querySelector(s);
-    const $$ = (s,c=document)=>Array.from(c.querySelectorAll(s));
-    function toast(m){ const t=$('#toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2000); }
-    function clearAll(){
-      const f=$('#dataForm'); if(f) f.reset();
-      ($('[name="اسم الطالب"]'))?.dispatchEvent(new Event('change',{bubbles:true}));
-      ($('[name="الصف الدراسي"]'))?.dispatchEvent(new Event('change',{bubbles:true}));
-      ($('[name="الشعبة"]'))?.dispatchEvent(new Event('change',{bubbles:true}));
-      $('#guardianPhone').textContent = '—';
+    let studentData = [];
+
+    async function fetchStudentData() {
+      const url = `https://docs.google.com/spreadsheets/d/${STUDENTS_SHEET_ID}/gviz/tq?tqx=out:json`;
+      const res = await fetch(url);
+      const txt = await res.text();
+      const json = JSON.parse(txt.substr(txt.indexOf("{"), txt.lastIndexOf("}") + 1));
+      const cols = json.table.cols.map(c => c.label);
+      const rows = json.table.rows.map(r => r.c.map(cell => cell ? cell.v : ""));
+      studentData = rows.map(r => Object.fromEntries(r.map((v,i)=>[cols[i], v])));
     }
 
-    async function fetchStudentsGViz(gid){
-      const url = gid ?
-        `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${gid}` :
-        `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq`;
-      const resp = await fetch(url);
-      const text = await resp.text();
-      const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}')+1));
-      const labels = json.table.cols.map(c => (c && c.label) ? String(c.label).trim() : '');
-      const rows = (json.table.rows||[]).map(r => (r.c||[]).map(c => c ? c.v : ''));
-      return rows.map(arr => { const o={}; labels.forEach((lab,i)=>{ o[lab] = (arr[i]==null?'':arr[i]); }); return o; });
+    function updateSections() {
+      const grade = document.getElementById("grade").value;
+      const sections = [...new Set(studentData.filter(s => s["الصف"] === grade).map(s => s["الشعبة"]))];
+      const sectionSelect = document.getElementById("section");
+      sectionSelect.innerHTML = `<option value="">اختر الشعبة</option>` + sections.map(s => `<option>${s}</option>`).join("");
+      document.getElementById("student").innerHTML = `<option value="">اختر اسم الطالب</option>`;
+      document.getElementById("guardian").textContent = "—";
     }
 
-    const DB = { raw:[], byGrade:{}, byGradeSection:{}, teachers:[] };
+    function updateStudents() {
+      const grade = document.getElementById("grade").value;
+      const section = document.getElementById("section").value;
+      const students = studentData.filter(s => s["الصف"] === grade && s["الشعبة"] === section);
+      const studentSelect = document.getElementById("student");
+      studentSelect.innerHTML = `<option value="">اختر اسم الطالب</option>` +
+        students.map(s => `<option value="${s["اسم الطالب"]}" data-phone="${s["رقم ولي الأمر"]}">${s["اسم الطالب"]}</option>`).join("");
+      document.getElementById("guardian").textContent = "—";
+    }
 
-    function buildIndexes(){
-      DB.byGrade = {};
-      DB.byGradeSection = {};
-      const teachersSet = new Set();
-      DB.raw.forEach(rec => {
-        const teacher = String(rec['المعلم']||'').trim();
-        const grade   = String(rec['الصف']||'').trim();
-        const section = String(rec['الشعبة']||'').trim();
-        const name    = String(rec['اسم الطالب']||'').trim();
-        const phone   = String(rec['رقم ولي الأمر']||'').trim();
-        if(teacher) teachersSet.add(teacher);
-        if(!grade) return;
-        if(!DB.byGrade[grade]) DB.byGrade[grade] = new Set();
-        if(section) DB.byGrade[grade].add(section);
-        const key = grade + '::' + section;
-        if(!DB.byGradeSection[key]) DB.byGradeSection[key] = [];
-        if(name) DB.byGradeSection[key].push({name, phone, teacher});
+    function onStudentChange() {
+      const selected = document.querySelector("#student option:checked");
+      const phone = selected ? selected.dataset.phone || "—" : "—";
+      document.getElementById("guardian").textContent = phone;
+      document.getElementById("guardian_phone").value = phone;
+    }
+
+    async function sendData() {
+      const data = {
+        "اسم المعلم أو الإداري": document.getElementById("teacher").value,
+        "التخصص": document.getElementById("major").value,
+        "الصف": document.getElementById("grade").value,
+        "الشعبة": document.getElementById("section").value,
+        "اسم الطالب": document.getElementById("student").value,
+        "رقم ولي الأمر": document.getElementById("guardian_phone").value,
+        "المخالفة": document.getElementById("violation").value
+      };
+      const missing = Object.entries(data).filter(([k,v]) => !v);
+      if (missing.length > 0) return alert("يرجى تعبئة جميع الحقول");
+
+      const res = await fetch(GAS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
       });
-      DB.teachers = Array.from(teachersSet).sort((a,b)=>a.localeCompare(b,'ar'));
-      Object.keys(DB.byGrade).forEach(g => DB.byGrade[g] = Array.from(DB.byGrade[g]).sort((a,b)=>a.localeCompare(b,'ar')));
+      alert("✅ تم إرسال المخالفة بنجاح");
+      document.getElementById("form").reset();
+      document.getElementById("guardian").textContent = "—";
     }
 
-    function fillGradeOptions(){
-      const sel = $('[name="الصف الدراسي"]');
-      const grades = Object.keys(DB.byGrade).sort((a,b)=>a.localeCompare(b,'ar'));
-      sel.innerHTML = '<option value="">اختر...</option>' + grades.map(g => `<option>${g}</option>`).join('');
-      sel.disabled = false;
-      fillSectionOptions('');
-      fillStudentOptions('','');
-    }
-
-    function fillSectionOptions(grade){
-      const sel = $('[name="الشعبة"]');
-      if(!grade){ sel.innerHTML = '<option value="">اختر الصف أولاً…</option>'; sel.disabled=true; return; }
-      const sections = DB.byGrade[grade] || [];
-      sel.innerHTML = '<option value="">اختر...</option>' + sections.map(s => `<option>${s}</option>`).join('');
-      sel.disabled = sections.length===0;
-      fillStudentOptions(grade, '');
-    }
-
-    function fillStudentOptions(grade, section){
-      const sel = $('[name="اسم الطالب"]');
-      const key = grade + '::' + section;
-      const list = DB.byGradeSection[key] || [];
-      if(!grade || !section || list.length===0){
-        sel.innerHTML = '<option value="">اختر الصف ثم الشعبة…</option>';
-        sel.disabled = true;
-        $('#guardianPhone').textContent = '—';
-        return;
-      }
-      sel.innerHTML = '<option value="">اختر...</option>' + list.map(s => `<option value="${s.name}" data-phone="${s.phone}">${s.name}</option>`).join('');
-      sel.disabled = false;
-      $('#guardianPhone').textContent = '—';
-    }
-
-    function onStudentChange(){
-      const opt = $('[name="اسم الطالب"] option:checked');
-      const phone = opt ? (opt.getAttribute('data-phone')||'') : '';
-      $('#guardianPhone').textContent = phone || '—';
-      $('[name="رقم ولي الأمر"]').value = phone || '';
-    }
-
-    async function sendToSupervisor(){
-      const btn = $('#sendBtn'); btn.disabled = true;
-      try{
-        const data = Object.fromEntries(new FormData($('#dataForm')).entries());
-        const req = ['الصف الدراسي','الشعبة','اسم الطالب','اسم المعلم أو الإداري','التخصص'];
-        const miss = req.filter(k => !data[k] || String(data[k]).trim()==='');
-        if(miss.length){ alert('يرجى تعبئة: '+miss.join('، ')); btn.disabled=false; return; }
-        const payload = {
-          'اسم الطالب': data['اسم الطالب']||'',
-          'الصف': data['الصف الدراسي']||'',
-          'الشعبة': data['الشعبة']||'',
-          'المخالفة': data['المخالفات الطلابية']||'',
-          'اسم المعلم أو الإداري': data['اسم المعلم أو الإداري']||'',
-          'التخصص': data['التخصص']||'',
-          'ملاحظات أخرى': data['ملاحظات أخرى']||'',
-          'رقم ولي الأمر': data['رقم ولي الأمر']||''
-        };
-        const res = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) });
-        let ok=false; let j=null;
-        if(res.type==='opaque'){ ok=true; } else { try{ j=await res.json(); }catch(_){} ok = !!(res.ok && j && (j.status==='ok' || j.status==='success')); }
-        if(ok){ toast('تم الإرسال للمشرف ✅'); clearAll(); } else { alert('تعذر الإرسال — تأكد من صلاحيات Web App'); }
-      }catch(e){ alert('خطأ أثناء الإرسال: '+e); }
-      finally{ btn.disabled=false; }
-    }
-
-    document.addEventListener('DOMContentLoaded', async()=>{
-      try{
-        DB.raw = await fetchStudentsGViz();
-        buildIndexes();
-        const teacherSel = $('[name="اسم المعلم أو الإداري"]');
-        teacherSel.innerHTML = '<option value="">اختر...</option>' + DB.teachers.map(t=>`<option>${t}</option>`).join('');
-        fillGradeOptions();
-      }catch(e){
-        console.error(e);
-        alert('تعذر تحميل بيانات الأسماء من الشيت. تأكد أن رابط المشاركة Anyone with the link: Viewer');
-      }
-      $('[name="الصف الدراسي"]').addEventListener('change', e=>{ fillSectionOptions(e.target.value); });
-      $('[name="الشعبة"]').addEventListener('change', e=>{ fillStudentOptions($('[name="الصف الدراسي"]').value, e.target.value); });
-      $('[name="اسم الطالب"]').addEventListener('change', onStudentChange);
-      $('#dataForm').addEventListener('submit', e=>{ e.preventDefault(); sendToSupervisor(); });
-      $('#sendBtn').addEventListener('click', e=>{ e.preventDefault(); sendToSupervisor(); });
+    window.addEventListener("DOMContentLoaded", async () => {
+      await fetchStudentData();
+      document.getElementById("grade").addEventListener("change", updateSections);
+      document.getElementById("section").addEventListener("change", updateStudents);
+      document.getElementById("student").addEventListener("change", onStudentChange);
+      document.getElementById("send").addEventListener("click", sendData);
     });
   </script>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>نموذج المخالفات — اختيار (صف ⇢ شعبة ⇢ اسم)</h1>
-      <p class="note">يتم تحميل <strong>الأسماء وأرقام أولياء الأمور</strong> آليًا من Google Sheet المربوط. اختر الصف ثم الشعبة ثم الاسم، وسيظهر رقم ولي الأمر آليًا ويُرسل ضمن البيانات.</p>
-      <form id="dataForm">
-        <div class="grid">
-          <div>
-            <label>الصف الدراسي</label>
-            <select name="الصف الدراسي" required disabled>
-              <option>جاري التحميل…</option>
-            </select>
-          </div>
-          <div>
-            <label>الشعبة</label>
-            <select name="الشعبة" required disabled>
-              <option>اختر الصف أولًا…</option>
-            </select>
-          </div>
-          <div>
-            <label>اسم الطالب</label>
-            <select name="اسم الطالب" required disabled>
-              <option>اختر الصف ثم الشعبة…</option>
-            </select>
-          </div>
-          <div>
-            <label>اسم المعلم أو الإداري</label>
-            <select name="اسم المعلم أو الإداري" required>
-              <option>جاري التحميل…</option>
-            </select>
-          </div>
-          <div>
-            <label>المخالفات الطلابية</label>
-            <select name="المخالفات الطلابية">
-              <option value="">اختر...</option>
-              <option>تأخير</option>
-              <option>غياب</option>
-              <option>سلوك</option>
-            </select>
-          </div>
-          <div>
-            <label>التخصص</label>
-            <input name="التخصص" placeholder="مثال: Math / Science" required />
-          </div>
-        </div>
+  <div class="container">
+    <h1>تسجيل مخالفة سلوكية</h1>
+    <form id="form" onsubmit="return false">
+      <label>اسم المعلم أو الإداري</label>
+      <input id="teacher" placeholder="اسم المعلم" required />
 
-        <div class="grid grid-1" style="margin-top:12px">
-          <div>
-            <label>رقم ولي الأمر (يُعبأ تلقائيًا)</label>
-            <div class="pill"><span>📞</span><span id="guardianPhone">—</span></div>
-            <input type="hidden" name="رقم ولي الأمر" value="">
-          </div>
-          <div>
-            <label>ملاحظات أخرى</label>
-            <textarea name="ملاحظات أخرى" placeholder="اختياري"></textarea>
-          </div>
-        </div>
+      <label>التخصص</label>
+      <input id="major" placeholder="مثال: رياضيات / علوم" required />
 
-        <div class="row" style="margin-top:14px">
-          <button id="sendBtn" type="submit" class="btn">حفظ/إرسال للمشرف</button>
-        </div>
-      </form>
-    </div>
+      <label>الصف الدراسي</label>
+      <select id="grade" required>
+        <option value="">اختر الصف</option>
+      </select>
+
+      <label>الشعبة</label>
+      <select id="section" required disabled>
+        <option>اختر الشعبة</option>
+      </select>
+
+      <label>اسم الطالب</label>
+      <select id="student" required disabled>
+        <option>اختر اسم الطالب</option>
+      </select>
+
+      <label>رقم ولي الأمر</label>
+      <div class="pill" id="guardian">—</div>
+      <input type="hidden" id="guardian_phone" />
+
+      <label>المخالفة</label>
+      <select id="violation" required>
+        <option value="">اختر المخالفة</option>
+        <option>تأخير</option>
+        <option>غياب</option>
+        <option>سلوك غير لائق</option>
+        <option>عدم إحضار الأدوات</option>
+      </select>
+
+      <button id="send">إرسال للمشرف</button>
+    </form>
   </div>
-  <div id="toast"></div>
 </body>
 </html>
