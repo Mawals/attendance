@@ -40,13 +40,18 @@
       studentData = rows.map(r => Object.fromEntries(r.map((v,i)=>[cols[i], v])));
     }
 
+    
     function updateSections() {
       const grade = document.getElementById("grade").value;
-      const sections = [...new Set(studentData.filter(s => s["الصف"] === grade).map(s => s["الشعبة"]))];
+      const sections = Array.from(new Set(studentData
+        .filter(s => s["الصف"] === grade)
+        .map(s => s["الشعبة"])
+        .filter(Boolean)));
       const sectionSelect = document.getElementById("section");
-      sectionSelect.innerHTML = `<option value="">اختر الشعبة</option>` + sections.map(s => `<option>${s}</option>`).join("");
-      sectionSelect.disabled = false;
-      document.getElementById("student").innerHTML = `<option value="">اختر اسم الطالب</option>`;
+      sectionSelect.innerHTML = '<option value="">اختر الشعبة</option>' + sections.map(s => `<option>${s}</option>`).join("");
+      sectionSelect.disabled = sections.length === 0;
+      document.getElementById("student").innerHTML = '<option value="">اختر اسم الطالب</option>';
+      document.getElementById("student").disabled = true;
       document.getElementById("guardian").textContent = "—";
     }
 
@@ -55,9 +60,12 @@
       const section = document.getElementById("section").value;
       const students = studentData.filter(s => s["الصف"] === grade && s["الشعبة"] === section);
       const studentSelect = document.getElementById("student");
-      studentSelect.innerHTML = `<option value="">اختر اسم الطالب</option>` +
-      studentSelect.disabled = false;
+      studentSelect.innerHTML = '<option value="">اختر اسم الطالب</option>' +
         students.map(s => `<option value="${s["اسم الطالب"]}" data-phone="${s["رقم ولي الأمر"]}">${s["اسم الطالب"]}</option>`).join("");
+      studentSelect.disabled = students.length === 0;
+      document.getElementById("guardian").textContent = "—";
+    }
+    " data-phone="${s["رقم ولي الأمر"]}">${s["اسم الطالب"]}</option>`).join("");
       document.getElementById("guardian").textContent = "—";
     }
 
