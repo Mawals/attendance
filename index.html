@@ -1,160 +1,612 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html dir="rtl" lang="ar">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>نموذج تسجيل مخالفة</title>
-  <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; direction: rtl; }
-    .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h1 { font-size: 22px; margin-bottom: 20px; }
-    label { display: block; margin-top: 15px; font-weight: bold; }
-    select, input, textarea { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #ccc; }
-    button { margin-top: 20px; background: #2563eb; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
-    .pill { margin-top: 10px; background: #eef2ff; padding: 8px 12px; display: inline-block; border-radius: 20px; font-size: 14px; }
-  </style>
-  <script>
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRpYkLDu5kwHXqoqZ9WPonUBDVrrbF3eo4hSAiuQosDnrYcrepDiSvTs6o2gBFrAQ/pub?gid=626465739&single=true&output=csv";
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbxbM7zmeN1gW_ryUSVdTkI8XKkMFyICb2RYbjwBIzc5Hean6J35BI9efjODhvdlnw/exec";
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="icon" href="logo_no_bg.png" type="image/png">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>منصة متابعة الطلبة بمدرسة معولة بن شمس</title>
+<style>
+@media (max-width: 600px) {
+  button {
+    width: 90%;
+    font-size: 18px;
+    margin: 10px auto;
+    display: block;
+  }
 
-    let studentData = [];
+  h2 {
+    font-size: 20px;
+  }
 
-    async function fetchStudentData() {
-      const res = await fetch(CSV_URL);
-      const text = await res.text();
-      const lines = text.trim().split("\n");
-      const headers = lines[0].split(",");
-      studentData = lines.slice(1).map(row => {
-        const values = row.split(",");
-        const entry = {};
-        headers.forEach((h, i) => entry[h.trim()] = values[i] ? values[i].trim() : "");
-        return entry;
-      });
-    }
-      const url = `https://docs.google.com/spreadsheets/d/${STUDENTS_SHEET_ID}/gviz/tq?tqx=out:json`;
-      const res = await fetch(url);
-      const txt = await res.text();
-      const json = JSON.parse(txt.substr(txt.indexOf("{"), txt.lastIndexOf("}") + 1));
-      const cols = json.table.cols.map(c => c.label);
-      const rows = json.table.rows.map(r => r.c.map(cell => cell ? cell.v : ""));
-      studentData = rows.map(r => Object.fromEntries(r.map((v,i)=>[cols[i], v])));
-    }
+  img {
+    width: 80px;
+  }
+}
+/* خلفية ناعمة */
+body {
+  background: linear-gradient(to bottom, #e6f0ff, #ffffff);
+}
 
-    
-    function updateSections() {
-      const grade = document.getElementById("grade").value;
-      const sections = Array.from(new Set(studentData
-        .filter(s => s["الصف"] === grade)
-        .map(s => s["الشعبة"])
-        .filter(Boolean)));
-      const sectionSelect = document.getElementById("section");
-      sectionSelect.innerHTML = '<option value="">اختر الشعبة</option>' + sections.map(s => `<option>${s}</option>`).join("");
-      sectionSelect.disabled = sections.length === 0;
-      document.getElementById("student").innerHTML = '<option value="">اختر اسم الطالب</option>';
-      document.getElementById("student").disabled = true;
-      document.getElementById("guardian").textContent = "—";
-    }
+/* حركة Fade in */
+.fade-in {
+  animation: fadeIn 1s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-    function updateStudents() {
-      const grade = document.getElementById("grade").value;
-      const section = document.getElementById("section").value;
-      const students = studentData.filter(s => s["الصف"] === grade && s["الشعبة"] === section);
-      const studentSelect = document.getElementById("student");
-      studentSelect.innerHTML = '<option value="">اختر اسم الطالب</option>' +
-        students.map(s => `<option value="${s["الاسم"]}" data-phone="${s["رقم الهاتف"]}">${s["الاسم"]}</option>`).join("");
-      studentSelect.disabled = students.length === 0;
-      document.getElementById("guardian").textContent = "—";
-    }
-    " data-phone="${s["رقم الهاتف"]}">${s["الاسم"]}</option>`).join("");
-      document.getElementById("guardian").textContent = "—";
-    }
+/* تحسين الأزرار */
+button {
+  font-size: 18px;
+  padding: 12px 20px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
 
-    function onStudentChange() {
-      const selected = document.querySelector("#student option:checked");
-      const phone = selected ? selected.dataset.phone || "—" : "—";
-      document.getElementById("guardian").textContent = phone;
-      document.getElementById("guardian_phone").value = phone;
-    }
-
-    async function sendData() {
-      const data = {
-        "اسم المعلم أو الإداري": document.getElementById("teacher").value,
-        "التخصص": document.getElementById("major").value,
-        "الصف": document.getElementById("grade").value,
-        "الشعبة": document.getElementById("section").value,
-        "اسم الطالب": document.getElementById("student").value,
-        "رقم ولي الأمر": document.getElementById("guardian_phone").value,
-        "المخالفة": document.getElementById("violation").value
-      };
-      const missing = Object.entries(data).filter(([k,v]) => !v);
-      if (missing.length > 0) return alert("يرجى تعبئة جميع الحقول");
-
-      const res = await fetch(GAS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
-      alert("✅ تم إرسال المخالفة بنجاح");
-      document.getElementById("form").reset();
-      document.getElementById("guardian").textContent = "—";
-    }
-
-    window.addEventListener("DOMContentLoaded", async () => {
-      await fetchStudentData();
-      document.getElementById("grade").addEventListener("change", updateSections);
-      document.getElementById("section").addEventListener("change", updateStudents);
-      document.getElementById("student").addEventListener("change", onStudentChange);
-      document.getElementById("send").addEventListener("click", sendData);
-    });
-  </script>
+/* استجابة الهاتف */
+@media (max-width: 600px) {
+  button {
+    width: 90%;
+    margin: 10px auto;
+    display: block;
+  }
+}
+  body { font-family: 'Tajawal', sans-serif; background: #e6f4ff; color: #111; padding: 0; margin: 0; direction: rtl; }
+  h2 { margin: 0; padding: 0; }
+  .menu-container { text-align: center; padding: 60px 20px; }
+  .menu-btn { display: inline-block; padding: 20px 40px; margin: 20px; font-size: 20px; border-radius: 10px; cursor: pointer; color: white; border: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: transform 0.2s; }
+  .menu-btn:hover { transform: scale(1.05); }
+  .absence-btn { background-color: #16a34a; }
+  .violation-btn { background-color: #dc2626; }
+  .morning-btn { background-color: #6a1b9a; }
+  .hidden { display: none; }
+  .top-bar { background-color: #b3e0ff; color: #004b80; display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  .top-bar h2 { display: flex; align-items: center; font-size: 22px; }
+  .top-bar h2 span.icon { margin-right: 8px; font-size: 24px; }
+  .back-btn { background-color: #5b9bd5; color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 14px; }
+  .back-btn:hover { background-color: #468cc4; }
+  .section-content { padding: 20px; text-align: center; }
+  table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); overflow: hidden; }
+  th, td { padding: 10px; border: 1px solid #ccc; text-align: right; }
+  th { background: #d9f0ff; color: #003f66; }
+  button, select, input { padding: 6px 12px; margin-left: 10px; border: 1px solid #ccc; border-radius: 6px; }
+  button { cursor: pointer; }
+  .present { background: #16a34a; color: #fff; }
+  .absent { background: #dc2626; color: #fff; }
+  .controls { margin-bottom: 20px; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>تسجيل مخالفة سلوكية</h1>
-    <form id="form" onsubmit="return false">
-      <label>اسم المعلم أو الإداري</label>
-      <input id="teacher" placeholder="اسم المعلم" required />
+  <!-- الصفحة الرئيسية -->
+  <div id="mainMenu" class="menu-container">
+    <div style="text-align: center; margin-top: 20px;" class="fade-in">
+  <img src="logo_no_bg.png" alt="شعار المدرسة" style="width: 120px; height: auto; margin-bottom: 10px;">
+  <h2 style="font-size: 24px; font-weight: bold;">منصة متابعة الطلبة بمدرسة معولة بن شمس</h2>
+<p style="font-size: 16px; margin-top: 5px; color: #333;">للعام الدراسي 2025/2026</p>
+</div>
+    <button class="menu-btn absence-btn" onclick="showSection('absenceSection')">🟩 📋 تسجيل الغياب</button>
+    <button class="menu-btn violation-btn" onclick="showSection('violationSection')">🟥 ⚠️ تسجيل المخالفات</button>
+    <button class="menu-btn morning-btn" onclick="showSection('morningLateSection')">🔵 ⏰ التأخر الصباحي</button>
 
-      <label>التخصص</label>
-      <input id="major" placeholder="مثال: رياضيات / علوم" required />
-
-      <label>الصف الدراسي</label>
-      <select id="grade" required>
-<option>5</option>
-<option>6</option>
-<option>7</option>
-<option>8</option>
-<option>9</option>
-<option>10</option>
-<option>11</option>
-<option>12</option>
-</select>
-
-      <label>الشعبة</label>
-      <select id="section" required disabled>
-        <option>اختر الشعبة</option>
-      </select>
-
-      <label>اسم الطالب</label>
-      <select id="student" required disabled>
-        <option>اختر اسم الطالب</option>
-      </select>
-
-      <label>رقم ولي الأمر</label>
-      <div class="pill" id="guardian">—</div>
-      <input type="hidden" id="guardian_phone" />
-
-      <label>المخالفة</label>
-      <select id="violation" required>
-        <option value="">اختر المخالفة</option>
-        <option>تأخير</option>
-        <option>غياب</option>
-        <option>سلوك غير لائق</option>
-        <option>عدم إحضار الأدوات</option>
-      </select>
-
-      <button id="send">إرسال للمشرف</button>
-    </form>
   </div>
+
+  <!-- صفحة الغياب -->
+  <div id="absenceSection" class="hidden">
+    <div class="top-bar">
+      <button class="back-btn" onclick="showSection('mainMenu')">🏠 رجوع</button>
+      <h2><span class="icon">🎓</span>تسجيل غياب الطلبة بمدرسة معولة بن شمس</h2>
+    </div>
+    <div class="section-content">
+      <div class="controls">
+        <label>اسم المعلم: <input id="teacherNameAbs" placeholder="اكتب اسم المعلم" type="text"/></label>
+        <label>الصف:
+          <select id="gradeSelectAbs" onchange="updateSections('Abs')">
+            <option value="">اختر</option>
+            <option value="5">الصف الخامس</option>
+            <option value="6">الصف السادس</option>
+            <option value="7">الصف السابع</option>
+            <option value="8">الصف الثامن</option>
+            <option value="9">الصف التاسع</option>
+            <option value="10">الصف العاشر</option>
+            <option value="11">الصف الحادي عشر</option>
+            <option value="12">الصف الثاني عشر</option>
+          </select>
+        </label>
+        <label>الشعبة:
+          <select id="sectionSelectAbs"><option value="">اختر</option></select>
+        </label>
+        <button onclick="loadCSVData('Abs')">عرض الطلاب</button>
+        <button onclick="noAbsentees()">✅ لا يوجد غياب</button>
+<button onclick="exportData('Abs')">📤 إرسال</button>
+<span id="loadingAbs" style="display:none; margin-right: 10px; color:#0077b6;">⏳ جاري الإرسال...</span>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>الاسم</th><th>الحالة</th></tr></thead>
+        <tbody id="studentsBodyAbs"><tr><td colspan="3">بانتظار تحميل البيانات...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  
+  <!-- صفحة ⏰ التأخر الصباحي -->
+  <div id="morningLateSection" class="hidden">
+    <div class="top-bar">
+      <button class="back-btn" onclick="showSection('mainMenu')">🏠 رجوع</button>
+      <h2><span class="icon">🎓</span>تسجيل ⏰ التأخر الصباحي للطلبة</h2>
+    </div>
+    <div class="section-content">
+      <div class="controls">
+        <label>اسم المعلم: <input id="teacherNameMorning" placeholder="اكتب اسم المعلم" type="text"/></label>
+        <label>الصف:
+          <select id="gradeSelectMorning" onchange="updateSections('Morning')">
+            <option value="">اختر</option>
+            <option value="5">الصف الخامس</option>
+            <option value="6">الصف السادس</option>
+            <option value="7">الصف السابع</option>
+            <option value="8">الصف الثامن</option>
+            <option value="9">الصف التاسع</option>
+            <option value="10">الصف العاشر</option>
+            <option value="11">الصف الحادي عشر</option>
+            <option value="12">الصف الثاني عشر</option>
+          </select>
+        </label>
+        <label>الشعبة:
+          <select id="sectionSelectMorning"><option value="">اختر</option></select>
+        </label>
+        <button onclick="loadCSVData('Morning')">عرض الطلاب</button>
+        <button onclick="exportData('Morning')">📤 إرسال</button><span id="loadingMorning" style="display:none; margin-right: 10px; color:#004b80;">⏳ جاري الإرسال...</span>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>الاسم</th><th>الحالة</th></tr></thead>
+        <tbody id="studentsBodyMorning"><tr><td colspan="3">بانتظار تحميل البيانات...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- صفحة المخالفات -->
+  <div id="violationSection" class="hidden">
+    <div class="top-bar">
+      <button class="back-btn" onclick="showSection('mainMenu')">🏠 رجوع</button>
+      <h2><span class="icon">🎓</span>تسجيل مخالفات الطلبة بمدرسة معولة بن شمس</h2>
+    </div>
+    <div class="section-content">
+      <div class="controls">
+        <label>اسم المعلم: <input id="teacherNameViol" placeholder="اكتب اسم المعلم" type="text"/></label>
+        <label>الصف:
+          <select id="gradeSelectViol" onchange="updateSections('Viol')">
+            <option value="">اختر</option>
+            <option value="5">الصف الخامس</option>
+            <option value="6">الصف السادس</option>
+            <option value="7">الصف السابع</option>
+            <option value="8">الصف الثامن</option>
+            <option value="9">الصف التاسع</option>
+            <option value="10">الصف العاشر</option>
+            <option value="11">الصف الحادي عشر</option>
+            <option value="12">الصف الثاني عشر</option>
+          </select>
+        </label>
+        <label>الشعبة:
+          <select id="sectionSelectViol"><option value="">اختر</option></select>
+        </label>
+        <button onclick="loadCSVData('Viol')">عرض الطلاب</button>
+        <button onclick="exportData('Viol')">📤 إرسال</button><span id="loadingViol" style="display:none; margin-right: 10px; color:#dc2626;">⏳ جاري الإرسال...</span>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>الاسم</th><th>المخالفة</th></tr></thead>
+        <tbody id="studentsBodyViol"><tr><td colspan="3">بانتظار تحميل البيانات...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+const SHEET_URLS = ['https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ3CGPHmBFZ8myoys49bw1MLrC_tfdcKuZ-ZBSMczVqLZbxzSe-LZbyqCDv2YZLQ/pub?gid=626465739&single=true&output=csv'];
+const EXPORT_WEBAPP_URLS = {
+  Abs: "https://script.google.com/macros/s/AKfycbwAUS5cpNyftQe0UTZBCWkZLdZtHpnf_J0iScVJY7YJ8-QZWPebrMfMBlXXru9cv6Ft3Q/exec",
+  Viol: "https://script.google.com/macros/s/AKfycbwAUS5cpNyftQe0UTZBCWkZLdZtHpnf_J0iScVJY7YJ8-QZWPebrMfMBlXXru9cv6Ft3Q/exec",
+  Morning: "https://script.google.com/macros/s/AKfycbwAUS5cpNyftQe0UTZBCWkZLdZtHpnf_J0iScVJY7YJ8-QZWPebrMfMBlXXru9cv6Ft3Q/exec"
+};
+const state = { Abs: {students: [], attendance: {}}, Viol: {students: [], violations: {}}, Morning: {students: [], status: {}} };
+
+
+function showSection(id) {
+  document.querySelectorAll('#mainMenu, #absenceSection, #violationSection, #morningLateSection')
+    .forEach(div => div.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+
+  if (id === 'mainMenu') {
+      state.Abs.attendance = {};
+      state.Morning.status = {};
+      state.Viol.violations = {};
+
+      document.getElementById('studentsBodyAbs').innerHTML = '<tr><td colspan="3">بانتظار تحميل البيانات...</td></tr>';
+      document.getElementById('studentsBodyMorning').innerHTML = '<tr><td colspan="3">بانتظار تحميل البيانات...</td></tr>';
+      document.getElementById('studentsBodyViol').innerHTML = '<tr><td colspan="3">بانتظار تحميل البيانات...</td></tr>';
+
+      document.getElementById('gradeSelectAbs').value = '';
+      document.getElementById('gradeSelectMorning').value = '';
+      document.getElementById('gradeSelectViol').value = '';
+
+      document.getElementById('sectionSelectAbs').innerHTML = '<option value="">اختر</option>';
+      document.getElementById('sectionSelectMorning').innerHTML = '<option value="">اختر</option>';
+      document.getElementById('sectionSelectViol').innerHTML = '<option value="">اختر</option>';
+  }
+}
+
+
+function updateSections(type) {
+  const grade = document.getElementById('gradeSelect' + type).value;
+  const sectionSelect = document.getElementById('sectionSelect' + type);
+  sectionSelect.innerHTML = '<option value="">اختر</option>';
+  let count = 3;
+  if (grade === '10') count = 4; else if (grade === '11') count = 6; else if (grade === '12') count = 5;
+  for (let i = 1; i <= count; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = 'الشعبة ' + i;
+    sectionSelect.appendChild(opt);
+  }
+}
+
+async function loadCSVData(type) {
+  const grade = document.getElementById('gradeSelect' + type).value.trim();
+  const section = document.getElementById('sectionSelect' + type).value.trim();
+  if (!grade || !section) { alert('يرجى اختيار الصف والشعبة'); return; }
+
+  try {
+    let combinedText = '';
+    for (const url of SHEET_URLS) {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const text = await res.text();
+      combinedText += text.trim() + '\n';
+    }
+    const lines = combinedText.trim().split('\n');
+    const students = lines.slice(1).map((line, i) => {
+      const cols = line.split(',');
+      return { id: i + 1, phone: cols[0]?.trim() || '', name: cols[1]?.trim() || '', grade: cols[3]?.trim() || '', section: cols[4]?.trim() || '' };
+    }).filter(s => s.grade === grade && s.section === section);
+
+    state[type].students = students;
+    if (type === 'Abs') renderAbsence(); else if (type === 'Viol') renderViolations(); else renderMorningLate();
+  } catch (err) { console.error(err); alert('تعذر تحميل البيانات'); }
+}
+
+function renderAbsence() {
+  const tbody = document.getElementById('studentsBodyAbs');
+  tbody.innerHTML = '';
+  state.Abs.students.forEach((student, index) => {
+    if (!(student.id in state.Abs.attendance)) state.Abs.attendance[student.id] = true;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${index + 1}</td><td>${student.name}</td>`;
+    const tdStatus = document.createElement('td');
+    const btn = document.createElement('button');
+    const present = state.Abs.attendance[student.id];
+    btn.textContent = present ? 'حاضر' : 'غائب';
+    btn.className = present ? 'present' : 'absent';
+    btn.onclick = () => { state.Abs.attendance[student.id] = !present; renderAbsence(); };
+    tdStatus.appendChild(btn);
+    tr.appendChild(tdStatus);
+    tbody.appendChild(tr);
+  });
+}
+
+
+
+function renderViolations() {
+  const tbody = document.getElementById('studentsBodyViol');
+  tbody.innerHTML = '';
+
+  state.Viol.students.forEach((student, index) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${student.name}</td>
+    `;
+
+    const tdViolation = document.createElement('td');
+
+    const mainViolations = [
+      {
+        title: 'الإخلال بنظام الطابور أو الحصص الدراسية أو الأنشطة المدرسية',
+        subOptions: [
+          'النوم في أثناء الحصص أو الأنشطة المدرسية',
+          'الإهمال في أداء الواجبات أو الأنشطة المدرسية',
+          'عدم الإنصات لتوجيهات المعلم',
+          'التسبب في الإزعاج بالقرب من الصفوف الدراسية',
+          'عدم الالتزام بإحضار الكتب والدفاتر والأدوات المدرسية والملابس الرياضية',
+          'التأخر عن الحصص الدراسية أو الغياب'
+        ]
+      },
+      {
+        title: 'الشجار مع زملائه والإساءة بالقول'
+      },
+      {
+        title: 'تناول المأكولات أو المشروبات في غير الوقت المخصص أو مضغ العلكة'
+      },
+      {
+        title: 'عدم المحافظة على النظافة أو المظهر الشخصي أو مرافق المدرسة'
+      },
+      {
+        title: 'التأخر عن الحصة الدراسية'
+      }
+    ];
+
+    mainViolations.forEach(main => {
+      const title = document.createElement('div');
+      title.textContent = main.title;
+      title.style.cursor = 'pointer';
+      title.style.background = '#f8d7da';
+      title.style.padding = '6px';
+      title.style.borderRadius = '6px';
+      title.style.marginBottom = '5px';
+
+      const container = document.createElement('div');
+      container.style.marginBottom = '8px';
+
+      if (main.subOptions) {
+        const subList = document.createElement('div');
+        subList.style.display = 'none';
+        subList.style.marginTop = '5px';
+
+        main.subOptions.forEach(optionText => {
+          const label = document.createElement('label');
+          label.style.display = 'block';
+
+          const radio = document.createElement('input');
+          radio.type = 'radio';
+          radio.name = 'viol_' + student.id;
+          radio.value = optionText;
+
+          if (state.Viol.violations[student.id] === optionText) {
+            radio.checked = true;
+          }
+
+          radio.onchange = () => {
+            state.Viol.violations[student.id] = optionText;
+          };
+
+          label.appendChild(radio);
+          label.append(' ' + optionText);
+          subList.appendChild(label);
+        });
+
+        title.onclick = () => {
+          subList.style.display = subList.style.display === 'none' ? 'block' : 'none';
+        };
+
+        container.appendChild(title);
+        container.appendChild(subList);
+      } else {
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'viol_' + student.id;
+        radio.value = main.title;
+        radio.style.marginLeft = '5px';
+
+        if (state.Viol.violations[student.id] === main.title) {
+          radio.checked = true;
+        }
+
+        radio.onchange = () => {
+          state.Viol.violations[student.id] = main.title;
+        };
+
+        title.onclick = () => {
+          radio.checked = true;
+          state.Viol.violations[student.id] = main.title;
+        };
+
+        container.appendChild(radio);
+        container.appendChild(title);
+      }
+
+      tdViolation.appendChild(container);
+    });
+
+    tr.appendChild(tdViolation);
+    tbody.appendChild(tr);
+  });
+}
+
+
+
+function exportData(type) {
+  const teacher = document.getElementById('teacherName' + (type === 'Abs' ? 'Abs' : 'Viol')).value.trim() || 'المعلم';
+  const grade = document.getElementById('gradeSelect' + type).value;
+  const section = document.getElementById('sectionSelect' + type).value;
+  const today = new Date().toLocaleDateString('ar-EG');
+
+  if (type === 'Abs') {
+    const absents = state.Abs.students.filter(s => state.Abs.attendance[s.id] === false);
+    if (!absents.length) return alert('لا يوجد غياب لتصديره.');
+    const rows = absents.map((s, i) => ({ serial: i + 1, phone: s.phone, name: s.name, message: `ولي أمر الطالب ${s.name}، نعلمكم بغياب ابنكم عن الصف ${grade}/${section} بتاريخ ${today}. —  المعلم : ${teacher}` }));
+    sendData(rows, type);
+  } 
+  else if (type === 'Morning') {
+    const teacher = document.getElementById('teacherNameMorning').value.trim() || 'غير معروف';
+    const lateStudents = state.Morning.students.filter(s => state.Morning.status[s.id] === false);
+    if (!lateStudents.length) return alert('لا يوجد طلاب متأخرين.');
+    const rows = lateStudents.map((s, i) => ({
+      serial: i + 1,
+      phone: s.phone,
+      name: s.name,
+      message: `ولي أمر الطالب ${s.name}، نعلمكم بتأخر ابنكم عن الحضور للمدرسة صباحًا بتاريخ ${today}. —  المعلم : ${teacher}`
+    }));
+    sendData(rows, type);
+  }
+
+  else {
+    const viols = state.Viol.students.filter(s => state.Viol.violations[s.id] && state.Viol.violations[s.id] !== '');
+    if (!viols.length) return alert('لم يتم اختيار أي مخالفات.');
+    const rows = viols.map((s, i) => ({ serial: i + 1, phone: s.phone, name: s.name, message: `ولي أمر الطالب ${s.name}، تم تسجيل مخالفة: (${state.Viol.violations[s.id]}) في الصف ${grade}/${section} بتاريخ ${today}. —  المعلم : ${teacher}` }));
+    sendData(rows, type);
+  }
+}
+
+function sendData(rows, type) {
+  const loadingSpan = document.getElementById('loading' + type);
+  const sendBtn = document.querySelector(`button[onclick="exportData('${type}')"]`);
+
+  if (loadingSpan) {
+    loadingSpan.textContent = '⏳ جاري الإرسال...';
+    loadingSpan.style.display = 'inline';
+  }
+
+  if (sendBtn) sendBtn.disabled = true;
+    rows.forEach(r => r.type = type);
+  fetch(EXPORT_WEBAPP_URLS[type], {
+    method: 'POST',
+
+    // ❗ مهم جداً — منع الـ OPTIONS Preflight
+    headers: { 'Content-Type': 'text/plain' },
+
+   body: JSON.stringify(rows)
+  })
+
+  .then(res => res.text())
+  .then(result => {
+    console.log("RESULT:", result);
+
+    if (loadingSpan) loadingSpan.textContent = '✅ تم الإرسال بنجاح';
+    setTimeout(() => {
+      if (loadingSpan) {
+        loadingSpan.style.display = 'none';
+        loadingSpan.textContent = '⏳ جاري الإرسال...';
+      }
+    }, 1500);
+
+    if (sendBtn) sendBtn.disabled = false;
+    resetForm(type);
+  })
+  .catch(err => {
+    alert('❌ فشل الإرسال');
+    console.error(err);
+
+    if (loadingSpan) loadingSpan.style.display = 'none';
+    if (sendBtn) sendBtn.disabled = false;
+    resetForm(type);
+  });
+}
+
+function renderMorningLate() {
+  const tbody = document.getElementById('studentsBodyMorning');
+  tbody.innerHTML = '';
+  state.Morning.students.forEach((student, index) => {
+    if (!(student.id in state.Morning.status)) state.Morning.status[student.id] = true;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${index + 1}</td><td>${student.name}</td>`;
+    const tdStatus = document.createElement('td');
+    const btn = document.createElement('button');
+    const early = state.Morning.status[student.id];
+    btn.textContent = early ? 'مبكر' : 'متأخر';
+    btn.className = early ? 'present' : 'absent';
+    btn.onclick = () => { state.Morning.status[student.id] = !early; renderMorningLate(); };
+    tdStatus.appendChild(btn);
+    tr.appendChild(tdStatus);
+    tbody.appendChild(tr);
+  });
+}
+
+
+function resetForm(type) {
+  // إفراغ الحقول
+  const nameInput = document.getElementById('teacherName' + type);
+  const gradeSelect = document.getElementById('gradeSelect' + type);
+  const sectionSelect = document.getElementById('sectionSelect' + type);
+  const tbodyId = type === 'Abs' ? 'studentsBodyAbs' : type === 'Viol' ? 'studentsBodyViol' : 'studentsBodyMorning';
+
+  if (nameInput) nameInput.value = '';
+  if (gradeSelect) gradeSelect.value = '';
+  if (sectionSelect) sectionSelect.innerHTML = '<option value="">اختر</option>';
+  const tbody = document.getElementById(tbodyId);
+  if (tbody) tbody.innerHTML = '<tr><td colspan="3">بانتظار تحميل البيانات...</td></tr>';
+
+  // العودة للقائمة الرئيسية
+  showSection('mainMenu');
+}
+
+
+function noAbsentees() {
+  const teacher = document.getElementById('teacherNameAbs').value.trim();
+  const grade = document.getElementById('gradeSelectAbs').value.trim();
+  const section = document.getElementById('sectionSelectAbs').value.trim();
+  const loadingSpan = document.getElementById('loadingAbs');
+  const sendBtn = document.querySelector("button[onclick='noAbsentees()']");
+
+  if (!teacher || !grade || !section) {
+    alert("يرجى إدخال اسم المعلم واختيار الصف والشعبة أولاً");
+    return;
+  }
+
+  // إظهار حالة الإرسال
+  if (loadingSpan) loadingSpan.style.display = 'inline';
+  if (sendBtn) sendBtn.disabled = true;
+
+  // البيانات المرسلة لجوجل شيت
+  const rows = [{
+    serial: 1,
+    type: "Abs",
+    phone: "",
+    name: "لا يوجد غياب",
+    message: `لا يوجد غياب في الصف ${grade} / ${section} - المعلم: ${teacher}`
+  }];
+
+  fetch(EXPORT_WEBAPP_URLS['Abs'], {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(rows)
+  })
+  .then(() => {
+    if (loadingSpan) loadingSpan.textContent = '✅ تم الإرسال بنجاح';
+    setTimeout(() => {
+      if (loadingSpan) {
+        loadingSpan.style.display = 'none';
+        loadingSpan.textContent = '⏳ جاري الإرسال...';
+      }
+    }, 1500);
+
+    if (sendBtn) sendBtn.disabled = false;
+
+    resetForm('Abs'); // ← التصحيح الصحيح
+  })
+  .catch(err => {
+    alert('❌ فشل الإرسال');
+    console.error(err);
+
+    if (loadingSpan) loadingSpan.style.display = 'none';
+    if (sendBtn) sendBtn.disabled = false;
+  });
+}
+
+
+function toggleDesignerInfo() {
+  const info = document.getElementById('designerInfo');
+  info.style.display = info.style.display === 'none' ? 'block' : 'none';
+}
+
+</script>
+<!-- معلومات المصمم -->
+<footer style="text-align: center; padding: 15px; background: #d9f0ff; color: #003f66; font-size: 14px;">
+  👨‍💻 <strong>المصمم: سيف جمال المعولي</strong>
+</footer>
+
+<!-- زر المساعدة ومحتواه -->
+<div style="text-align: center; background: #e0f7ff; padding: 20px;">
+  <button onclick="toggleDesignerInfo()" style="background: #0077b6; color: white; padding: 10px 20px; border-radius: 10px; border: none; font-size: 16px; cursor: pointer;">
+    💡 مساعدة / معلومات المصمم
+  </button>
+  <div id="designerInfo" style="margin-top: 15px; display: none; line-height: 1.8; color: #004b80;">
+    👨‍💻 <strong>المصمم:</strong> سيف جمال المعولي<br>
+    ✉️ <strong>الإيميل:</strong> <a href="mailto:saif2005@moe.om">saif2005@moe.om</a>
+  </div>
+</div>
 </body>
 </html>
