@@ -1,612 +1,772 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <link rel="icon" href="logo_no_bg.png" type="image/png">
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>منصة متابعة الطلبة بمدرسة معولة بن شمس</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>استبانة استطلاع آراء أعضاء الهيئة التعليمية في الحياة المدرسية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-@media (max-width: 600px) {
-  button {
-    width: 90%;
-    font-size: 18px;
-    margin: 10px auto;
-    display: block;
-  }
+:root{
+  --navy:#0f3d5e; --navy2:#16557f; --teal:#14897a; --gold:#c9a24b;
+  --bg:#eef3f7; --card:#fff; --ink:#1d2b36; --muted:#6b7c8a; --line:#dde6ee;
+  --c1:#0f8a5f; --c2:#4caf50; --c3:#2b7bbf; --c4:#f07c2a; --c5:#d64545;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--ink);line-height:1.7}
+.wrap{max-width:1000px;margin:0 auto;padding:18px}
 
-  h2 {
-    font-size: 20px;
-  }
+.header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;border-radius:18px;padding:22px 26px;position:relative;overflow:hidden;box-shadow:0 10px 30px rgba(15,61,94,.25)}
+.header:after{content:"";position:absolute;inset:auto -60px -80px auto;width:260px;height:260px;border-radius:50%;background:rgba(201,162,75,.15)}
+.hgrid{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;position:relative;z-index:1}
+.hright{font-weight:700;font-size:15px;line-height:1.9}
+.hright div:first-child{font-size:17px}
+.hleft{text-align:left;font-size:13px;opacity:.9}
+.seal{width:74px;height:74px;border-radius:50%;border:2px solid var(--gold);display:grid;place-items:center;background:rgba(255,255,255,.08)}
+.seal svg{width:40px;height:40px}
+.title{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.2);text-align:center;position:relative;z-index:1}
+.title h1{margin:0;font-size:22px;font-weight:800}
+.title p{margin:4px 0 0;opacity:.85;font-size:14px}
 
-  img {
-    width: 80px;
-  }
-}
-/* خلفية ناعمة */
-body {
-  background: linear-gradient(to bottom, #e6f0ff, #ffffff);
-}
+.sticky{position:sticky;top:0;z-index:20;background:rgba(238,243,247,.95);backdrop-filter:blur(6px);padding:10px 0;margin-top:14px}
+.stat{display:flex;align-items:center;gap:14px;background:#fff;border-radius:14px;padding:10px 16px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.stat .bar{flex:1;height:10px;background:var(--line);border-radius:10px;overflow:hidden}
+.stat .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--c1));transition:width .3s}
+.stat b{color:var(--navy);min-width:70px;text-align:center}
 
-/* حركة Fade in */
-.fade-in {
-  animation: fadeIn 1s ease;
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+.legend{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0 4px}
+.legend span{font-size:13px;padding:4px 12px;border-radius:20px;color:#fff}
 
-/* تحسين الأزرار */
-button {
-  font-size: 18px;
-  padding: 12px 20px;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-button:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
+.setup{background:#fffaf0;border:1.5px dashed var(--gold);border-radius:16px;padding:14px 18px;margin:16px 0;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.setup .txt{flex:1;min-width:240px;font-size:14px}
+.setup .txt b{color:var(--navy)}
+.bm{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;text-decoration:none;padding:10px 18px;border-radius:12px;font-weight:700;cursor:grab;box-shadow:0 4px 12px rgba(15,61,94,.3)}
+.dropzone{background:linear-gradient(180deg,#f6f9fc,#fff);border-radius:14px;padding:12px 12px 18px;margin-bottom:12px}
+.bar-mock{display:flex;align-items:center;gap:8px;background:#e8edf2;border-radius:8px;padding:6px 10px;font-size:13px;color:var(--muted)}
+.bar-mock .slot{border:2px dashed var(--gold);border-radius:6px;padding:2px 12px;color:#b07d10;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.4}}
+.arrow{font-size:26px;color:var(--gold);animation:up 1.2s ease-in-out infinite}
+@keyframes up{50%{transform:translateY(-8px)}}
+.bm.big{font-size:18px;padding:14px 30px}
+.hint{font-size:12px;color:var(--muted);margin-top:8px}
+.lockicon{font-size:40px;line-height:1}
+.step2{background:#e9f7f1;border:1.5px solid var(--teal);border-radius:12px;padding:12px;font-size:15px;color:var(--ink);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(20,137,122,.15)}}
+body.locked .wrap{filter:blur(3px);pointer-events:none;user-select:none}
+#setupModal{z-index:55}
 
-/* استجابة الهاتف */
-@media (max-width: 600px) {
-  button {
-    width: 90%;
-    margin: 10px auto;
-    display: block;
-  }
-}
-  body { font-family: 'Tajawal', sans-serif; background: #e6f4ff; color: #111; padding: 0; margin: 0; direction: rtl; }
-  h2 { margin: 0; padding: 0; }
-  .menu-container { text-align: center; padding: 60px 20px; }
-  .menu-btn { display: inline-block; padding: 20px 40px; margin: 20px; font-size: 20px; border-radius: 10px; cursor: pointer; color: white; border: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: transform 0.2s; }
-  .menu-btn:hover { transform: scale(1.05); }
-  .absence-btn { background-color: #16a34a; }
-  .violation-btn { background-color: #dc2626; }
-  .morning-btn { background-color: #6a1b9a; }
-  .hidden { display: none; }
-  .top-bar { background-color: #b3e0ff; color: #004b80; display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-  .top-bar h2 { display: flex; align-items: center; font-size: 22px; }
-  .top-bar h2 span.icon { margin-right: 8px; font-size: 24px; }
-  .back-btn { background-color: #5b9bd5; color: white; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 14px; }
-  .back-btn:hover { background-color: #468cc4; }
-  .section-content { padding: 20px; text-align: center; }
-  table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); overflow: hidden; }
-  th, td { padding: 10px; border: 1px solid #ccc; text-align: right; }
-  th { background: #d9f0ff; color: #003f66; }
-  button, select, input { padding: 6px 12px; margin-left: 10px; border: 1px solid #ccc; border-radius: 6px; }
-  button { cursor: pointer; }
-  .present { background: #16a34a; color: #fff; }
-  .absent { background: #dc2626; color: #fff; }
-  .controls { margin-bottom: 20px; }
+.section{background:var(--card);border-radius:16px;margin:16px 0;box-shadow:0 3px 14px rgba(0,0,0,.05);overflow:hidden}
+.shead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(90deg,#f6f9fc,#fff);border-bottom:1px solid var(--line)}
+.shead h2{margin:0;font-size:17px;color:var(--navy);display:flex;align-items:center;gap:10px}
+.shead h2 .num{background:var(--navy);color:#fff;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-size:14px}
+.fillall{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px;color:var(--muted)}
+.fillall button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:3px 8px;font-family:inherit;font-size:12px;cursor:pointer}
+.fillall button:hover{background:var(--navy);color:#fff}
+
+.item{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:14px 18px;border-bottom:1px solid #f0f4f7;transition:background .2s}
+.item:last-child{border-bottom:0}
+.item.missing{background:#fff5f5}
+.item .n{width:30px;height:30px;border-radius:50%;background:#eef3f7;color:var(--navy);display:grid;place-items:center;font-weight:700;font-size:13px}
+.item.ok .n{background:var(--teal);color:#fff}
+.q{font-weight:500;font-size:15.5px}
+.q .req{color:var(--c5)}
+.opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.opts label{cursor:pointer}
+.opts input{display:none}
+.opts span{display:inline-block;padding:6px 14px;border-radius:22px;border:1.5px solid var(--line);font-size:13.5px;background:#fff;transition:all .15s;user-select:none}
+.opts span:hover{border-color:var(--navy2)}
+.opts input:checked + span{color:#fff;border-color:transparent;box-shadow:0 3px 8px rgba(0,0,0,.15)}
+.opts input[value="1"]:checked + span{background:var(--c1)}
+.opts input[value="2"]:checked + span{background:var(--c2)}
+.opts input[value="3"]:checked + span{background:var(--c3)}
+.opts input[value="4"]:checked + span{background:var(--c4)}
+.opts input[value="5"]:checked + span{background:var(--c5)}
+
+.sug{padding:16px 18px}
+.sug .prefix{display:inline-block;background:var(--navy);color:#fff;border-radius:8px 8px 0 0;padding:4px 14px;font-weight:700;font-size:14px}
+.sug textarea{width:100%;min-height:130px;border:1.5px solid var(--line);border-radius:0 12px 12px 12px;padding:12px;font-family:inherit;font-size:15px;resize:vertical}
+.sug textarea:focus{outline:none;border-color:var(--teal)}
+.count{text-align:left;font-size:12px;color:var(--muted)}
+
+.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:22px 0}
+.btn{border:0;border-radius:12px;padding:13px 26px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.btn.primary{background:linear-gradient(135deg,var(--teal),var(--c1));color:#fff;box-shadow:0 6px 16px rgba(20,137,122,.35)}
+.btn.primary:hover{transform:translateY(-1px)}
+.btn.ghost{background:#fff;color:var(--navy);border:1.5px solid var(--line)}
+.btn.ghost:hover{border-color:var(--navy)}
+
+footer{text-align:center;color:var(--muted);font-size:13px;padding:16px 0 30px}
+footer b{color:var(--navy)}
+
+.modal{position:fixed;inset:0;background:rgba(10,30,45,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal.show{display:flex}
+.box{background:#fff;border-radius:18px;width:100%;max-width:460px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.3);animation:pop .2s}
+@keyframes pop{from{transform:scale(.95);opacity:0}}
+.box h3{margin:0 0 4px;color:var(--navy);font-size:20px}
+.box p.sub{margin:0 0 16px;color:var(--muted);font-size:13px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:14px;font-weight:700;margin-bottom:4px}
+.field input{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:15px;direction:ltr;text-align:left}
+.field input:focus{outline:none;border-color:var(--teal)}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px;margin:6px 0 14px}
+.note{font-size:13px;color:var(--ink);background:#f6f9fc;border-radius:10px;padding:10px 12px;margin-bottom:14px}
+.note ol{margin:4px 0 0;padding-right:18px}
+.row{display:flex;gap:8px}
+.row .btn{flex:1;justify-content:center}
+
+.pbar{height:16px;background:var(--line);border-radius:10px;overflow:hidden;margin:16px 0 8px}
+.pbar i{display:block;height:100%;width:0;transition:width .4s;background-size:30px 30px,auto;background-image:linear-gradient(45deg,rgba(255,255,255,.22) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.22) 50%,rgba(255,255,255,.22) 75%,transparent 75%),linear-gradient(90deg,var(--teal),var(--c1));animation:mv 1s linear infinite}
+@keyframes mv{to{background-position:30px 0,0 0}}
+.pct{text-align:center;font-size:30px;font-weight:800;color:var(--navy)}
+.pmsg{text-align:center;color:var(--ink);min-height:26px}
+.pmsg.user{color:#b36b00;font-weight:700}
+.pmsg.error{color:var(--c5);font-weight:700}
+.pmsg.done{color:var(--c1);font-weight:700}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:12px;display:none;z-index:60}
+
+@media(max-width:640px){.hgrid{grid-template-columns:1fr}.hleft{text-align:right}.seal{display:none}.shead{flex-direction:column;align-items:flex-start}}
+@media print{.sticky,.actions,.fillall,.setup{display:none}body{background:#fff}.section{box-shadow:none;border:1px solid #ccc}}
 </style>
 </head>
 <body>
-  <!-- الصفحة الرئيسية -->
-  <div id="mainMenu" class="menu-container">
-    <div style="text-align: center; margin-top: 20px;" class="fade-in">
-  <img src="logo_no_bg.png" alt="شعار المدرسة" style="width: 120px; height: auto; margin-bottom: 10px;">
-  <h2 style="font-size: 24px; font-weight: bold;">منصة متابعة الطلبة بمدرسة معولة بن شمس</h2>
-<p style="font-size: 16px; margin-top: 5px; color: #333;">للعام الدراسي 2025/2026</p>
+<div class="wrap">
+
+  <header class="header">
+    <div class="hgrid">
+      <div class="hright">
+        <div>سلطنة عُمان</div>
+        <div>وزارة التعليم</div>
+        <div>المديرية العامة للتعليم بمحافظة جنوب الباطنة</div>
+      </div>
+      <div class="seal" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#c9a24b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7l10-4 10 4-10 4z"/><path d="M6 9v5c0 1.5 3 3 6 3s6-1.5 6-3V9"/><path d="M22 7v6"/></svg>
+      </div>
+      <div class="hleft">
+        <div>تطوير الأداء المدرسي</div>
+        <div>استبانات تطوير الأداء</div>
+        <div id="today"></div>
+      </div>
+    </div>
+    <div class="title">
+      <h1>استبانة استطلاع آراء أعضاء الهيئة التعليمية في الحياة المدرسية</h1>
+      <p>اختر التقدير المناسب لكل بند، ثم اكتب مقترحك واضغط «رفع إلى البوابة»</p>
+    </div>
+  </header>
+
+  <div class="sticky">
+    <div class="stat">
+      <span>المُنجز</span>
+      <div class="bar"><i id="topBar"></i></div>
+      <b id="topCount">0 / 0</b>
+    </div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+
+  <div id="sections"></div>
+
+  <section class="section">
+    <div class="shead"><h2><span class="num">✎</span> حقول الاستمارة — المقترحات <span style="color:var(--c5)">*</span></h2></div>
+    <div class="sug">
+      <span class="prefix">المقترح:</span>
+      <textarea id="suggestion" placeholder="اكتب مقترحك هنا..."></textarea>
+      <div class="count"><span id="cnt">0</span> / <span id="max"></span> حرف (يُضاف «المقترح:» تلقائيًا في البوابة)</div>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button class="btn primary" id="uploadBtn">⬆ رفع إلى البوابة</button>
+    <button class="btn ghost" id="excelBtn">⬇ تصدير Excel</button>
+    <button class="btn ghost" id="printBtn">🖨 طباعة</button>
+    <button class="btn ghost" id="clearBtn">↺ مسح الإجابات</button>
+  </div>
+
+  <footer>
+    تصميم وبرمجة: <b>سيف جمال المعولي</b> — مدرسة معولة بن شمس<br>
+    وزارة التعليم — المديرية العامة للتعليم بمحافظة جنوب الباطنة
+  </footer>
 </div>
-    <button class="menu-btn absence-btn" onclick="showSection('absenceSection')">🟩 📋 تسجيل الغياب</button>
-    <button class="menu-btn violation-btn" onclick="showSection('violationSection')">🟥 ⚠️ تسجيل المخالفات</button>
-    <button class="menu-btn morning-btn" onclick="showSection('morningLateSection')">🔵 ⏰ التأخر الصباحي</button>
 
-  </div>
-
-  <!-- صفحة الغياب -->
-  <div id="absenceSection" class="hidden">
-    <div class="top-bar">
-      <button class="back-btn" onclick="showSection('mainMenu')">🏠 رجوع</button>
-      <h2><span class="icon">🎓</span>تسجيل غياب الطلبة بمدرسة معولة بن شمس</h2>
-    </div>
-    <div class="section-content">
-      <div class="controls">
-        <label>اسم المعلم: <input id="teacherNameAbs" placeholder="اكتب اسم المعلم" type="text"/></label>
-        <label>الصف:
-          <select id="gradeSelectAbs" onchange="updateSections('Abs')">
-            <option value="">اختر</option>
-            <option value="5">الصف الخامس</option>
-            <option value="6">الصف السادس</option>
-            <option value="7">الصف السابع</option>
-            <option value="8">الصف الثامن</option>
-            <option value="9">الصف التاسع</option>
-            <option value="10">الصف العاشر</option>
-            <option value="11">الصف الحادي عشر</option>
-            <option value="12">الصف الثاني عشر</option>
-          </select>
-        </label>
-        <label>الشعبة:
-          <select id="sectionSelectAbs"><option value="">اختر</option></select>
-        </label>
-        <button onclick="loadCSVData('Abs')">عرض الطلاب</button>
-        <button onclick="noAbsentees()">✅ لا يوجد غياب</button>
-<button onclick="exportData('Abs')">📤 إرسال</button>
-<span id="loadingAbs" style="display:none; margin-right: 10px; color:#0077b6;">⏳ جاري الإرسال...</span>
-      </div>
-      <table>
-        <thead><tr><th>#</th><th>الاسم</th><th>الحالة</th></tr></thead>
-        <tbody id="studentsBodyAbs"><tr><td colspan="3">بانتظار تحميل البيانات...</td></tr></tbody>
-      </table>
+<!-- نافذة الدخول -->
+<div class="modal" id="loginModal">
+  <div class="box">
+    <h3>بيانات الدخول إلى البوابة التعليمية</h3>
+    <p class="sub">تُستخدم فقط لتسجيل الدخول في البوابة، ولا تُحفظ في هذه الصفحة.</p>
+    <div class="field"><label>اسم المستخدم</label><input id="user" autocomplete="username"></div>
+    <div class="field"><label>كلمة المرور</label><input id="pass" type="password" autocomplete="current-password"></div>
+    <label class="chk"><input type="checkbox" id="autoSave" checked> حفظ الاستمارة تلقائيًا بعد التعبئة</label>
+    <div class="row">
+      <button class="btn primary" id="goBtn">متابعة</button>
+      <button class="btn ghost" data-close>إلغاء</button>
     </div>
   </div>
+</div>
 
-  
-  <!-- صفحة ⏰ التأخر الصباحي -->
-  <div id="morningLateSection" class="hidden">
-    <div class="top-bar">
-      <button class="back-btn" onclick="showSection('mainMenu')">🏠 رجوع</button>
-      <h2><span class="icon">🎓</span>تسجيل ⏰ التأخر الصباحي للطلبة</h2>
+<!-- نافذة التقدم -->
+<div class="modal" id="progModal">
+  <div class="box">
+    <h3>رفع الاستبانة إلى البوابة</h3>
+    <div class="note" id="howto">
+      ✔ تم تجهيز بياناتك ونسخها، وفُتحت البوابة في تبويب جديد.
+      <ol>
+        <li>انتقل إلى تبويب البوابة.</li>
+        <li>اضغط زر <b>«⬆ رفع الاستبانة»</b> في شريط المفضلة.</li>
+        <li>إذا طلب منك المتصفح السماح باللصق فوافق، أو الصق بـ <b>Ctrl + V</b>.</li>
+      </ol>
+      سيتم الدخول والرفع في الخلفية، ويظهر التقدّم هنا وفي البوابة.
     </div>
-    <div class="section-content">
-      <div class="controls">
-        <label>اسم المعلم: <input id="teacherNameMorning" placeholder="اكتب اسم المعلم" type="text"/></label>
-        <label>الصف:
-          <select id="gradeSelectMorning" onchange="updateSections('Morning')">
-            <option value="">اختر</option>
-            <option value="5">الصف الخامس</option>
-            <option value="6">الصف السادس</option>
-            <option value="7">الصف السابع</option>
-            <option value="8">الصف الثامن</option>
-            <option value="9">الصف التاسع</option>
-            <option value="10">الصف العاشر</option>
-            <option value="11">الصف الحادي عشر</option>
-            <option value="12">الصف الثاني عشر</option>
-          </select>
-        </label>
-        <label>الشعبة:
-          <select id="sectionSelectMorning"><option value="">اختر</option></select>
-        </label>
-        <button onclick="loadCSVData('Morning')">عرض الطلاب</button>
-        <button onclick="exportData('Morning')">📤 إرسال</button><span id="loadingMorning" style="display:none; margin-right: 10px; color:#004b80;">⏳ جاري الإرسال...</span>
-      </div>
-      <table>
-        <thead><tr><th>#</th><th>الاسم</th><th>الحالة</th></tr></thead>
-        <tbody id="studentsBodyMorning"><tr><td colspan="3">بانتظار تحميل البيانات...</td></tr></tbody>
-      </table>
+    <div class="pbar"><i id="pBar"></i></div>
+    <div class="pct" id="pPct">0%</div>
+    <div class="pmsg" id="pMsg">بانتظار الضغط على زر «رفع الاستبانة» في البوابة...</div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn ghost" id="recopy">نسخ البيانات مرة أخرى</button>
+      <button class="btn ghost" data-close>إغلاق</button>
     </div>
   </div>
+</div>
 
-
-  <!-- صفحة المخالفات -->
-  <div id="violationSection" class="hidden">
-    <div class="top-bar">
-      <button class="back-btn" onclick="showSection('mainMenu')">🏠 رجوع</button>
-      <h2><span class="icon">🎓</span>تسجيل مخالفات الطلبة بمدرسة معولة بن شمس</h2>
+<!-- نافذة إضافة الزر -->
+<div class="modal" id="setupModal">
+  <div class="box" style="max-width:520px;text-align:center">
+    <div class="lockicon">🔒</div>
+    <h3>الاستبانة مقفلة حتى إضافة زر الرفع</h3>
+    <p class="sub">اسحب الزر الأزرق وأفلته في شريط المفضلة أعلى المتصفح (مرة واحدة فقط)</p>
+    <div class="dropzone">
+      <div class="bar-mock"><span>★</span><span class="slot">أفلت الزر هنا</span></div>
+      <div class="arrow">⬆</div>
+      <a class="bm big" id="bookmarklet" href="#" draggable="true">⬆ رفع الاستبانة</a>
+      <div class="hint">اضغط مطولًا على الزر واسحبه للأعلى</div>
     </div>
-    <div class="section-content">
-      <div class="controls">
-        <label>اسم المعلم: <input id="teacherNameViol" placeholder="اكتب اسم المعلم" type="text"/></label>
-        <label>الصف:
-          <select id="gradeSelectViol" onchange="updateSections('Viol')">
-            <option value="">اختر</option>
-            <option value="5">الصف الخامس</option>
-            <option value="6">الصف السادس</option>
-            <option value="7">الصف السابع</option>
-            <option value="8">الصف الثامن</option>
-            <option value="9">الصف التاسع</option>
-            <option value="10">الصف العاشر</option>
-            <option value="11">الصف الحادي عشر</option>
-            <option value="12">الصف الثاني عشر</option>
-          </select>
-        </label>
-        <label>الشعبة:
-          <select id="sectionSelectViol"><option value="">اختر</option></select>
-        </label>
-        <button onclick="loadCSVData('Viol')">عرض الطلاب</button>
-        <button onclick="exportData('Viol')">📤 إرسال</button><span id="loadingViol" style="display:none; margin-right: 10px; color:#dc2626;">⏳ جاري الإرسال...</span>
-      </div>
-      <table>
-        <thead><tr><th>#</th><th>الاسم</th><th>المخالفة</th></tr></thead>
-        <tbody id="studentsBodyViol"><tr><td colspan="3">بانتظار تحميل البيانات...</td></tr></tbody>
-      </table>
+    <div class="note" style="text-align:right">
+      لا يظهر شريط المفضلة؟ اضغط <b>Ctrl + Shift + B</b> وسيظهر فورًا.
+      <details style="margin-top:6px"><summary style="cursor:pointer;color:var(--navy)">طريقة بديلة (بدون سحب)</summary>
+        انقر بالزر الأيمن على شريط المفضلة ← «إضافة صفحة» ← الاسم: <b>رفع الاستبانة</b> ← الصق في خانة العنوان (Ctrl+V) بعد الضغط على:
+        <button class="btn ghost" style="padding:4px 10px;font-size:12px" id="copyBm">نسخ رمز الزر</button>
+      </details>
+    </div>
+    <div class="step2" id="step2">
+      <b>الخطوة الأخيرة:</b> اضغط الآن الزر <b>«⬆ رفع الاستبانة»</b> الذي أضفته في شريط المفضلة لفتح الاستبانة 🔓
     </div>
   </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-const SHEET_URLS = ['https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ3CGPHmBFZ8myoys49bw1MLrC_tfdcKuZ-ZBSMczVqLZbxzSe-LZbyqCDv2YZLQ/pub?gid=626465739&single=true&output=csv'];
-const EXPORT_WEBAPP_URLS = {
-  Abs: "https://script.google.com/macros/s/AKfycbwAUS5cpNyftQe0UTZBCWkZLdZtHpnf_J0iScVJY7YJ8-QZWPebrMfMBlXXru9cv6Ft3Q/exec",
-  Viol: "https://script.google.com/macros/s/AKfycbwAUS5cpNyftQe0UTZBCWkZLdZtHpnf_J0iScVJY7YJ8-QZWPebrMfMBlXXru9cv6Ft3Q/exec",
-  Morning: "https://script.google.com/macros/s/AKfycbwAUS5cpNyftQe0UTZBCWkZLdZtHpnf_J0iScVJY7YJ8-QZWPebrMfMBlXXru9cv6Ft3Q/exec"
-};
-const state = { Abs: {students: [], attendance: {}}, Viol: {students: [], violations: {}}, Morning: {students: [], status: {}} };
-
-
-function showSection(id) {
-  document.querySelectorAll('#mainMenu, #absenceSection, #violationSection, #morningLateSection')
-    .forEach(div => div.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-
-  if (id === 'mainMenu') {
-      state.Abs.attendance = {};
-      state.Morning.status = {};
-      state.Viol.violations = {};
-
-      document.getElementById('studentsBodyAbs').innerHTML = '<tr><td colspan="3">بانتظار تحميل البيانات...</td></tr>';
-      document.getElementById('studentsBodyMorning').innerHTML = '<tr><td colspan="3">بانتظار تحميل البيانات...</td></tr>';
-      document.getElementById('studentsBodyViol').innerHTML = '<tr><td colspan="3">بانتظار تحميل البيانات...</td></tr>';
-
-      document.getElementById('gradeSelectAbs').value = '';
-      document.getElementById('gradeSelectMorning').value = '';
-      document.getElementById('gradeSelectViol').value = '';
-
-      document.getElementById('sectionSelectAbs').innerHTML = '<option value="">اختر</option>';
-      document.getElementById('sectionSelectMorning').innerHTML = '<option value="">اختر</option>';
-      document.getElementById('sectionSelectViol').innerHTML = '<option value="">اختر</option>';
+/* =====================================================================
+   أداة الرفع — تعمل داخل البوابة عند الضغط على زر المفضلة
+   تصميم: سيف جمال المعولي — مدرسة معولة بن شمس
+   ===================================================================== */
+function SAIF_UPLOADER() {
+  if (!/moe\.gov\.om$/i.test(location.hostname)) {
+    if (typeof window.SAIF_UNLOCK === 'function') { window.SAIF_UNLOCK(); return; }
+    alert('اضغط هذا الزر وأنت داخل البوابة التعليمية.'); return;
   }
-}
+  if (window.__saifRunning) { alert('أداة الرفع تعمل بالفعل.'); return; }
+  window.__saifRunning = true;
 
+  var LEVEL_TXT = { 1: 'متميز', 2: 'جيد', 3: 'ملائم', 4: 'غير ملائم', 5: 'يحتاج إلى تدخل' };
+  var DEFAULT_OPT = 'غير مقيم';
+  var STEPS = [
+    { name: 'أعمالي', t: ['أعمالي'] },
+    { name: 'تطوير الأداء المدرسي', t: ['تطوير الأداء المدرسي'] },
+    { name: 'استبانات تطوير الأداء', t: ['استبانات تطوير الأداء', 'استبانات تطوير الأداء المدرسي'] },
+    { name: 'عرض', t: ['عرض'] },
+    { name: 'إضافة', t: ['إضافة', '+ إضافة', '+إضافة', 'اضافة'] },
+    { name: 'اختيار الاستمارة', form: true }
+  ];
 
-function updateSections(type) {
-  const grade = document.getElementById('gradeSelect' + type).value;
-  const sectionSelect = document.getElementById('sectionSelect' + type);
-  sectionSelect.innerHTML = '<option value="">اختر</option>';
-  let count = 3;
-  if (grade === '10') count = 4; else if (grade === '11') count = 6; else if (grade === '12') count = 5;
-  for (let i = 1; i <= count; i++) {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = 'الشعبة ' + i;
-    sectionSelect.appendChild(opt);
+  var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+  var norm = function (s) {
+    return (s || '').replace(/[ً-ٰٟـ]/g, '')
+      .replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/ؤ/g, 'و').replace(/ئ/g, 'ي')
+      .replace(/[*.,،؛;:()\[\]\/\\\-–_"'«»!?؟+]/g, ' ').replace(/\s+/g, ' ').trim();
+  };
+  var visible = function (el) { return !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length)); };
+
+  /* ---------- الواجهة ---------- */
+  var st = document.createElement('style');
+  st.textContent =
+    '#saifOv{position:fixed;inset:0;z-index:2147483646;background:rgba(10,30,45,.82);display:flex;align-items:center;justify-content:center;font-family:Tahoma,"Segoe UI",sans-serif;direction:rtl}' +
+    '#saifOv.peek{background:transparent;pointer-events:none;align-items:flex-start;padding-top:6px}' +
+    '#saifOv .b{background:#fff;border-radius:18px;padding:24px;width:min(470px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;pointer-events:auto}' +
+    '#saifOv.peek .b{padding:10px 14px;border:2px solid #e0a100}' +
+    '#saifOv h3{margin:0 0 4px;color:#0f3d5e;font-size:19px}#saifOv .s{color:#6b7c8a;font-size:12px;margin-bottom:12px}' +
+    '#saifOv .bar{height:16px;background:#dde6ee;border-radius:10px;overflow:hidden}' +
+    '#saifOv .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#14897a,#0f8a5f);transition:width .35s}' +
+    '#saifOv .p{font-size:30px;font-weight:800;color:#0f3d5e;margin:8px 0 2px}#saifOv .m{min-height:22px;font-size:14px;color:#1d2b36}' +
+    '#saifOv .m.user{color:#b36b00;font-weight:bold}#saifOv .m.error{color:#d64545;font-weight:bold}#saifOv .m.done{color:#0f8a5f;font-weight:bold}' +
+    '#saifOv button{margin:12px 4px 0;border:1px solid #dde6ee;background:#fff;border-radius:10px;padding:6px 16px;cursor:pointer;font-family:inherit}' +
+    '#saifOv .f{margin-top:10px;font-size:11px;color:#8a99a6}' +
+    '#saifFrame{position:fixed;left:-5000px;top:0;width:1280px;height:900px;border:0;opacity:0;pointer-events:none;z-index:2147483645;background:#fff}' +
+    '#saifFrame.show{left:3vw;top:12vh;width:94vw;height:85vh;opacity:1;pointer-events:auto;border:3px solid #e0a100;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.4)}';
+  document.documentElement.appendChild(st);
+  var ov = document.createElement('div'); ov.id = 'saifOv';
+  ov.innerHTML = '<div class="b"><h3>رفع استبانة آراء أعضاء الهيئة التعليمية</h3>' +
+    '<div class="s">يتم العمل في الخلفية — لا تغلق هذا التبويب</div>' +
+    '<div class="bar"><i></i></div><div class="p">0%</div><div class="m"></div>' +
+    '<button id="saifShow" style="display:none">عرض الاستمارة</button><button id="saifStop">إيقاف</button>' +
+    '<div class="f">تصميم: سيف جمال المعولي — مدرسة معولة بن شمس</div></div>';
+  document.body.appendChild(ov);
+  var ifr = document.createElement('iframe'); ifr.id = 'saifFrame';
+  document.body.appendChild(ifr);
+
+  var stopped = false, lastAlert = '', loads = 0;
+  function cleanup() { stopped = true; window.__saifRunning = false; ov.remove(); ifr.remove(); st.remove(); }
+  ov.querySelector('#saifStop').onclick = cleanup;
+  ov.querySelector('#saifShow').onclick = function () { reveal(!ifr.classList.contains('show')); };
+  function reveal(on) {
+    ifr.classList.toggle('show', on); ov.classList.toggle('peek', on);
+    ov.querySelector('#saifShow').textContent = on ? 'إخفاء الاستمارة' : 'عرض الاستمارة';
   }
-}
+  function prog(p, m, k) {
+    k = k || 'info';
+    ov.querySelector('.bar i').style.width = p + '%';
+    ov.querySelector('.p').textContent = Math.round(p) + '%';
+    var e = ov.querySelector('.m'); e.textContent = m; e.className = 'm ' + k;
+    var done = (k === 'done' || k === 'error');
+    ov.querySelector('#saifStop').textContent = done ? 'إغلاق' : 'إيقاف';
+    try { if (window.opener) window.opener.postMessage({ type: 'SAIF_SURVEY_PROGRESS', pct: p, msg: m, kind: k }, '*'); } catch (x) {}
+  }
+  function fail(m) { prog(0, m, 'error'); ov.querySelector('#saifShow').style.display = ''; throw new Error('SAIF_STOP'); }
 
-async function loadCSVData(type) {
-  const grade = document.getElementById('gradeSelect' + type).value.trim();
-  const section = document.getElementById('sectionSelect' + type).value.trim();
-  if (!grade || !section) { alert('يرجى اختيار الصف والشعبة'); return; }
-
-  try {
-    let combinedText = '';
-    for (const url of SHEET_URLS) {
-      const res = await fetch(url);
-      if (!res.ok) continue;
-      const text = await res.text();
-      combinedText += text.trim() + '\n';
+  /* ---------- الإطار الخلفي ---------- */
+  function patchWin(w) {
+    try {
+      if (!w.__saifP) {
+        w.__saifP = 1;
+        w.open = function (u) { if (u) w.location.href = u; return w; };
+        w.alert = function (m) { lastAlert = String(m); };
+        w.confirm = function () { return true; };
+      }
+      for (var i = 0; i < w.frames.length; i++) patchWin(w.frames[i]);
+    } catch (e) {}
+  }
+  ifr.addEventListener('load', function () { loads++; patchWin(ifr.contentWindow); });
+  function docs() {
+    var out = [];
+    (function walk(w) { try { out.push(w.document); for (var i = 0; i < w.frames.length; i++) walk(w.frames[i]); } catch (e) {} })(ifr.contentWindow);
+    return out;
+  }
+  function q(fn) { var d = docs(); for (var i = 0; i < d.length; i++) { var r = fn(d[i]); if (r) return r; } return null; }
+  async function waitFor(fn, ms) {
+    var t = Date.now();
+    while (Date.now() - t < ms) { if (stopped) throw new Error('SAIF_STOP'); patchWin(ifr.contentWindow); var r = fn(); if (r) return r; await sleep(300); }
+    return null;
+  }
+  function findByText(doc, targets, tol) {
+    tol = tol == null ? 6 : tol;
+    var els = doc.querySelectorAll('a,button,input[type=button],input[type=submit],span,td,li,div,label,font,b,p,h3,h4');
+    var best = null, bestLen = 1e9;
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i]; if (!visible(el)) continue;
+      var t = norm(el.tagName === 'INPUT' ? el.value : el.textContent);
+      if (!t || t.length > 120) continue;
+      for (var j = 0; j < targets.length; j++) {
+        var nt = norm(targets[j]);
+        if ((t === nt || (t.indexOf(nt) > -1 && t.length <= nt.length + tol)) && t.length <= bestLen) { best = el; bestLen = t.length; }
+      }
     }
-    const lines = combinedText.trim().split('\n');
-    const students = lines.slice(1).map((line, i) => {
-      const cols = line.split(',');
-      return { id: i + 1, phone: cols[0]?.trim() || '', name: cols[1]?.trim() || '', grade: cols[3]?.trim() || '', section: cols[4]?.trim() || '' };
-    }).filter(s => s.grade === grade && s.section === section);
-
-    state[type].students = students;
-    if (type === 'Abs') renderAbsence(); else if (type === 'Viol') renderViolations(); else renderMorningLate();
-  } catch (err) { console.error(err); alert('تعذر تحميل البيانات'); }
-}
-
-function renderAbsence() {
-  const tbody = document.getElementById('studentsBodyAbs');
-  tbody.innerHTML = '';
-  state.Abs.students.forEach((student, index) => {
-    if (!(student.id in state.Abs.attendance)) state.Abs.attendance[student.id] = true;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${index + 1}</td><td>${student.name}</td>`;
-    const tdStatus = document.createElement('td');
-    const btn = document.createElement('button');
-    const present = state.Abs.attendance[student.id];
-    btn.textContent = present ? 'حاضر' : 'غائب';
-    btn.className = present ? 'present' : 'absent';
-    btn.onclick = () => { state.Abs.attendance[student.id] = !present; renderAbsence(); };
-    tdStatus.appendChild(btn);
-    tr.appendChild(tdStatus);
-    tbody.appendChild(tr);
-  });
-}
-
-
-
-function renderViolations() {
-  const tbody = document.getElementById('studentsBodyViol');
-  tbody.innerHTML = '';
-
-  state.Viol.students.forEach((student, index) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${index + 1}</td>
-      <td>${student.name}</td>
-    `;
-
-    const tdViolation = document.createElement('td');
-
-    const mainViolations = [
-      {
-        title: 'الإخلال بنظام الطابور أو الحصص الدراسية أو الأنشطة المدرسية',
-        subOptions: [
-          'النوم في أثناء الحصص أو الأنشطة المدرسية',
-          'الإهمال في أداء الواجبات أو الأنشطة المدرسية',
-          'عدم الإنصات لتوجيهات المعلم',
-          'التسبب في الإزعاج بالقرب من الصفوف الدراسية',
-          'عدم الالتزام بإحضار الكتب والدفاتر والأدوات المدرسية والملابس الرياضية',
-          'التأخر عن الحصص الدراسية أو الغياب'
-        ]
-      },
-      {
-        title: 'الشجار مع زملائه والإساءة بالقول'
-      },
-      {
-        title: 'تناول المأكولات أو المشروبات في غير الوقت المخصص أو مضغ العلكة'
-      },
-      {
-        title: 'عدم المحافظة على النظافة أو المظهر الشخصي أو مرافق المدرسة'
-      },
-      {
-        title: 'التأخر عن الحصة الدراسية'
-      }
-    ];
-
-    mainViolations.forEach(main => {
-      const title = document.createElement('div');
-      title.textContent = main.title;
-      title.style.cursor = 'pointer';
-      title.style.background = '#f8d7da';
-      title.style.padding = '6px';
-      title.style.borderRadius = '6px';
-      title.style.marginBottom = '5px';
-
-      const container = document.createElement('div');
-      container.style.marginBottom = '8px';
-
-      if (main.subOptions) {
-        const subList = document.createElement('div');
-        subList.style.display = 'none';
-        subList.style.marginTop = '5px';
-
-        main.subOptions.forEach(optionText => {
-          const label = document.createElement('label');
-          label.style.display = 'block';
-
-          const radio = document.createElement('input');
-          radio.type = 'radio';
-          radio.name = 'viol_' + student.id;
-          radio.value = optionText;
-
-          if (state.Viol.violations[student.id] === optionText) {
-            radio.checked = true;
-          }
-
-          radio.onchange = () => {
-            state.Viol.violations[student.id] = optionText;
-          };
-
-          label.appendChild(radio);
-          label.append(' ' + optionText);
-          subList.appendChild(label);
-        });
-
-        title.onclick = () => {
-          subList.style.display = subList.style.display === 'none' ? 'block' : 'none';
-        };
-
-        container.appendChild(title);
-        container.appendChild(subList);
-      } else {
-        const radio = document.createElement('input');
-        radio.type = 'radio';
-        radio.name = 'viol_' + student.id;
-        radio.value = main.title;
-        radio.style.marginLeft = '5px';
-
-        if (state.Viol.violations[student.id] === main.title) {
-          radio.checked = true;
-        }
-
-        radio.onchange = () => {
-          state.Viol.violations[student.id] = main.title;
-        };
-
-        title.onclick = () => {
-          radio.checked = true;
-          state.Viol.violations[student.id] = main.title;
-        };
-
-        container.appendChild(radio);
-        container.appendChild(title);
-      }
-
-      tdViolation.appendChild(container);
+    if (best) { var a = best.closest('a,button'); if (a && visible(a)) return a; }
+    return best;
+  }
+  function fire(el) { ['input', 'change'].forEach(function (t) { el.dispatchEvent(new Event(t, { bubbles: true })); }); }
+  function clickEl(el) {
+    var a = el.closest && el.closest('a'); if (a && a.target && a.target !== '_self') a.target = '_self';
+    if (el.form && el.form.target) el.form.target = '_self';
+    var w = el.ownerDocument.defaultView;
+    ['mouseover', 'mousedown', 'mouseup'].forEach(function (t) { el.dispatchEvent(new w.MouseEvent(t, { bubbles: true, cancelable: true, view: w })); });
+    el.click();
+  }
+  var findPw = function () { return q(function (d) { return Array.prototype.find.call(d.querySelectorAll('input[type=password]'), visible); }); };
+  var formSelects = function (d) {
+    var dn = norm(DEFAULT_OPT);
+    return Array.prototype.filter.call(d.querySelectorAll('select'), function (s) {
+      return Array.prototype.some.call(s.options, function (o) { return norm(o.text) === dn; });
     });
+  };
+  var formDoc = function () { return q(function (d) { return formSelects(d).length >= 5 ? d : null; }); };
 
-    tr.appendChild(tdViolation);
-    tbody.appendChild(tr);
-  });
-}
-
-
-
-function exportData(type) {
-  const teacher = document.getElementById('teacherName' + (type === 'Abs' ? 'Abs' : 'Viol')).value.trim() || 'المعلم';
-  const grade = document.getElementById('gradeSelect' + type).value;
-  const section = document.getElementById('sectionSelect' + type).value;
-  const today = new Date().toLocaleDateString('ar-EG');
-
-  if (type === 'Abs') {
-    const absents = state.Abs.students.filter(s => state.Abs.attendance[s.id] === false);
-    if (!absents.length) return alert('لا يوجد غياب لتصديره.');
-    const rows = absents.map((s, i) => ({ serial: i + 1, phone: s.phone, name: s.name, message: `ولي أمر الطالب ${s.name}، نعلمكم بغياب ابنكم عن الصف ${grade}/${section} بتاريخ ${today}. —  المعلم : ${teacher}` }));
-    sendData(rows, type);
-  } 
-  else if (type === 'Morning') {
-    const teacher = document.getElementById('teacherNameMorning').value.trim() || 'غير معروف';
-    const lateStudents = state.Morning.students.filter(s => state.Morning.status[s.id] === false);
-    if (!lateStudents.length) return alert('لا يوجد طلاب متأخرين.');
-    const rows = lateStudents.map((s, i) => ({
-      serial: i + 1,
-      phone: s.phone,
-      name: s.name,
-      message: `ولي أمر الطالب ${s.name}، نعلمكم بتأخر ابنكم عن الحضور للمدرسة صباحًا بتاريخ ${today}. —  المعلم : ${teacher}`
-    }));
-    sendData(rows, type);
+  /* ---------- المطابقة ---------- */
+  function rowLabel(sel) {
+    var row = sel.closest('tr') || sel.parentElement.parentElement;
+    var c = row.cloneNode(true);
+    c.querySelectorAll('select,script,style').forEach(function (x) { x.remove(); });
+    return norm(c.textContent);
+  }
+  function sim(a, b) {
+    var A = a.split(' '), B = {}, i = 0, u = {};
+    b.split(' ').forEach(function (w) { B[w] = 1; });
+    A.forEach(function (w) { if (B[w] && !u[w]) { i++; u[w] = 1; } });
+    var na = Object.keys(A.reduce(function (o, w) { o[w] = 1; return o; }, {})).length;
+    return (2 * i) / (na + Object.keys(B).length || 1);
+  }
+  function bestItem(label, answers) {
+    var best = null, sc = 0;
+    answers.forEach(function (a) { var s = sim(label, norm(a.text)); if (s > sc) { sc = s; best = a; } });
+    return sc >= 0.55 ? best : null;
+  }
+  function pickOpt(sel, level) {
+    var want = norm(LEVEL_TXT[level]);
+    for (var i = 0; i < sel.options.length; i++) {
+      var t = norm(sel.options[i].text).replace(/^[0-9٠-٩]+\s*/, '');
+      if (t === want) return sel.options[i];
+    }
+    for (var j = 0; j < sel.options.length; j++) if (norm(sel.options[j].text).indexOf(String(level)) === 0) return sel.options[j];
+    return null;
   }
 
-  else {
-    const viols = state.Viol.students.filter(s => state.Viol.violations[s.id] && state.Viol.violations[s.id] !== '');
-    if (!viols.length) return alert('لم يتم اختيار أي مخالفات.');
-    const rows = viols.map((s, i) => ({ serial: i + 1, phone: s.phone, name: s.name, message: `ولي أمر الطالب ${s.name}، تم تسجيل مخالفة: (${state.Viol.violations[s.id]}) في الصف ${grade}/${section} بتاريخ ${today}. —  المعلم : ${teacher}` }));
-    sendData(rows, type);
-  }
-}
-
-function sendData(rows, type) {
-  const loadingSpan = document.getElementById('loading' + type);
-  const sendBtn = document.querySelector(`button[onclick="exportData('${type}')"]`);
-
-  if (loadingSpan) {
-    loadingSpan.textContent = '⏳ جاري الإرسال...';
-    loadingSpan.style.display = 'inline';
+  /* ---------- البيانات ---------- */
+  async function getData() {
+    var code = '';
+    try { code = await navigator.clipboard.readText(); } catch (e) {}
+    if (!/^SAIF1:/.test((code || '').trim())) code = prompt('الصق بيانات الاستبانة المنسوخة من صفحة الاستبانة (Ctrl + V):') || '';
+    code = code.trim();
+    if (code.indexOf('SAIF1:') !== 0) return null;
+    try { return JSON.parse(decodeURIComponent(escape(atob(code.slice(6))))); } catch (e) { return null; }
   }
 
-  if (sendBtn) sendBtn.disabled = true;
-    rows.forEach(r => r.type = type);
-  fetch(EXPORT_WEBAPP_URLS[type], {
-    method: 'POST',
+  /* ---------- التنفيذ ---------- */
+  (async function main() {
+    try {
+      prog(1, 'جارٍ قراءة بيانات الاستبانة...');
+      var data = await getData();
+      try { navigator.clipboard.writeText(''); } catch (e) {}
+      if (!data) fail('لم يتم العثور على بيانات الاستبانة — ارجع لصفحة الاستبانة واضغط «رفع إلى البوابة» أولًا');
 
-    // ❗ مهم جداً — منع الـ OPTIONS Preflight
-    headers: { 'Content-Type': 'text/plain' },
+      prog(3, 'جارٍ فتح البوابة في الخلفية...');
+      ifr.src = location.href.split('#')[0];
+      var ok = await waitFor(function () { try { return loads > 0 && ifr.contentDocument && ifr.contentDocument.body; } catch (e) { return false; } }, 25000);
+      if (!ok) fail('البوابة لم تسمح بالتحميل في الخلفية');
+      await sleep(800);
 
-   body: JSON.stringify(rows)
-  })
-
-  .then(res => res.text())
-  .then(result => {
-    console.log("RESULT:", result);
-
-    if (loadingSpan) loadingSpan.textContent = '✅ تم الإرسال بنجاح';
-    setTimeout(() => {
-      if (loadingSpan) {
-        loadingSpan.style.display = 'none';
-        loadingSpan.textContent = '⏳ جاري الإرسال...';
+      /* تسجيل الدخول */
+      var pw = findPw();
+      if (pw) {
+        if (!data.user || !data.pass) { reveal(true); prog(5, 'سجّل الدخول في النافذة الظاهرة، وسيكمل الرفع تلقائيًا', 'user'); }
+        else {
+          prog(5, 'جارٍ تسجيل الدخول...');
+          var d = pw.ownerDocument;
+          var ins = Array.prototype.filter.call(d.querySelectorAll('input'), function (i) { return visible(i) && /^(text|email|tel|number|)$/i.test(i.getAttribute('type') || 'text'); });
+          var before = ins.filter(function (i) { return i.compareDocumentPosition(pw) & Node.DOCUMENT_POSITION_FOLLOWING; });
+          var u = before[before.length - 1] || ins[0];
+          if (u) { u.focus(); u.value = data.user; fire(u); }
+          pw.focus(); pw.value = data.pass; fire(pw);
+          var cap = ins.find(function (i) { return i !== u && /captcha|code|verif|رمز/i.test((i.name || '') + (i.id || '') + (i.placeholder || '')); }) || d.querySelector('img[src*="aptcha" i],img[id*="aptcha" i]');
+          if (cap) { reveal(true); prog(6, 'اكتب رمز التحقق في النافذة الظاهرة ثم اضغط «دخول»', 'user'); }
+          else {
+            var btn = findByText(d, ['دخول', 'تسجيل الدخول', 'تسجيل دخول', 'Login', 'Sign in']) || (pw.form && pw.form.querySelector('[type=submit]'));
+            if (btn) clickEl(btn); else if (pw.form) pw.form.submit();
+          }
+        }
+        data.pass = '';
+        var l0 = loads;
+        var out = await waitFor(function () { return loads > l0 && !findPw(); }, 120000);
+        if (!out) fail('تعذر تسجيل الدخول — تحقق من اسم المستخدم وكلمة المرور');
+        reveal(false);
+        await sleep(1200);
       }
-    }, 1500);
+      data.pass = '';
 
-    if (sendBtn) sendBtn.disabled = false;
-    resetForm(type);
-  })
-  .catch(err => {
-    alert('❌ فشل الإرسال');
-    console.error(err);
-
-    if (loadingSpan) loadingSpan.style.display = 'none';
-    if (sendBtn) sendBtn.disabled = false;
-    resetForm(type);
-  });
-}
-
-function renderMorningLate() {
-  const tbody = document.getElementById('studentsBodyMorning');
-  tbody.innerHTML = '';
-  state.Morning.students.forEach((student, index) => {
-    if (!(student.id in state.Morning.status)) state.Morning.status[student.id] = true;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${index + 1}</td><td>${student.name}</td>`;
-    const tdStatus = document.createElement('td');
-    const btn = document.createElement('button');
-    const early = state.Morning.status[student.id];
-    btn.textContent = early ? 'مبكر' : 'متأخر';
-    btn.className = early ? 'present' : 'absent';
-    btn.onclick = () => { state.Morning.status[student.id] = !early; renderMorningLate(); };
-    tdStatus.appendChild(btn);
-    tr.appendChild(tdStatus);
-    tbody.appendChild(tr);
-  });
-}
-
-
-function resetForm(type) {
-  // إفراغ الحقول
-  const nameInput = document.getElementById('teacherName' + type);
-  const gradeSelect = document.getElementById('gradeSelect' + type);
-  const sectionSelect = document.getElementById('sectionSelect' + type);
-  const tbodyId = type === 'Abs' ? 'studentsBodyAbs' : type === 'Viol' ? 'studentsBodyViol' : 'studentsBodyMorning';
-
-  if (nameInput) nameInput.value = '';
-  if (gradeSelect) gradeSelect.value = '';
-  if (sectionSelect) sectionSelect.innerHTML = '<option value="">اختر</option>';
-  const tbody = document.getElementById(tbodyId);
-  if (tbody) tbody.innerHTML = '<tr><td colspan="3">بانتظار تحميل البيانات...</td></tr>';
-
-  // العودة للقائمة الرئيسية
-  showSection('mainMenu');
-}
-
-
-function noAbsentees() {
-  const teacher = document.getElementById('teacherNameAbs').value.trim();
-  const grade = document.getElementById('gradeSelectAbs').value.trim();
-  const section = document.getElementById('sectionSelectAbs').value.trim();
-  const loadingSpan = document.getElementById('loadingAbs');
-  const sendBtn = document.querySelector("button[onclick='noAbsentees()']");
-
-  if (!teacher || !grade || !section) {
-    alert("يرجى إدخال اسم المعلم واختيار الصف والشعبة أولاً");
-    return;
-  }
-
-  // إظهار حالة الإرسال
-  if (loadingSpan) loadingSpan.style.display = 'inline';
-  if (sendBtn) sendBtn.disabled = true;
-
-  // البيانات المرسلة لجوجل شيت
-  const rows = [{
-    serial: 1,
-    type: "Abs",
-    phone: "",
-    name: "لا يوجد غياب",
-    message: `لا يوجد غياب في الصف ${grade} / ${section} - المعلم: ${teacher}`
-  }];
-
-  fetch(EXPORT_WEBAPP_URLS['Abs'], {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify(rows)
-  })
-  .then(() => {
-    if (loadingSpan) loadingSpan.textContent = '✅ تم الإرسال بنجاح';
-    setTimeout(() => {
-      if (loadingSpan) {
-        loadingSpan.style.display = 'none';
-        loadingSpan.textContent = '⏳ جاري الإرسال...';
+      /* التنقل */
+      var i = 0, stepT = Date.now();
+      while (!formDoc()) {
+        if (stopped) return;
+        var el = null, hit = -1;
+        for (var j = i; j < STEPS.length && hit < 0; j++) {
+          if (j > i && Date.now() - stepT < 12000) break;
+          var s = STEPS[j];
+          if (s.form) {
+            var key = norm('استطلاع آراء أعضاء الهيئة التعليمية');
+            var selF = q(function (dd) {
+              return Array.prototype.find.call(dd.querySelectorAll('select'), function (x) { return Array.prototype.some.call(x.options, function (o) { return norm(o.text).indexOf(key) > -1; }); });
+            });
+            if (selF) {
+              var opt = Array.prototype.find.call(selF.options, function (o) { return norm(o.text).indexOf(key) > -1; });
+              if (selF.value !== opt.value) { selF.value = opt.value; fire(selF); }
+              hit = j;
+            } else {
+              el = q(function (dd) { return findByText(dd, ['استبانة استطلاع آراء أعضاء الهيئة التعليمية في الحياة المدرسية', 'استطلاع آراء أعضاء الهيئة التعليمية'], 40); });
+              if (el) { clickEl(el); hit = j; }
+            }
+          } else {
+            el = q(function (dd) { return findByText(dd, s.t); });
+            if (el) { clickEl(el); hit = j; }
+          }
+        }
+        if (hit >= 0) {
+          i = hit + 1; stepT = Date.now();
+          prog(5 + Math.round(i / STEPS.length * 20), STEPS[i] ? 'تم «' + STEPS[hit].name + '» ← جارٍ فتح «' + STEPS[i].name + '»' : 'جارٍ فتح الاستمارة...');
+          await sleep(1800);
+          await waitFor(function () { try { return ifr.contentDocument.readyState === 'complete'; } catch (e) { return true; } }, 15000);
+          continue;
+        }
+        if (i >= STEPS.length && Date.now() - stepT > 8000 && Date.now() - stepT < 9000) {
+          var go = q(function (dd) { return findByText(dd, ['عرض', 'التالي', 'بدء', 'متابعة']); }); if (go) clickEl(go);
+        }
+        if (Date.now() - stepT > 45000) {
+          reveal(true);
+          prog(5 + Math.round(i / STEPS.length * 20), STEPS[i] ? 'لم أجد «' + STEPS[i].name + '» — اضغطه في النافذة الظاهرة وسأكمل تلقائيًا' : 'افتح الاستمارة في النافذة الظاهرة وسأكملها تلقائيًا', 'user');
+        }
+        await sleep(500);
       }
-    }, 1500);
+      reveal(false);
 
-    if (sendBtn) sendBtn.disabled = false;
+      /* تعبئة البنود */
+      var fd = formDoc(), sels = formSelects(fd), total = sels.length, um = 0;
+      prog(28, 'تم فتح الاستمارة — ' + total + ' بندًا');
+      for (var k = 0; k < total; k++) {
+        if (stopped) return;
+        var m = bestItem(rowLabel(sels[k]), data.answers);
+        var o = m && pickOpt(sels[k], m.level);
+        if (o) { sels[k].value = o.value; fire(sels[k]); } else um++;
+        prog(28 + Math.round((k + 1) / total * 57), 'تعبئة البند ' + (k + 1) + ' من ' + total);
+        await sleep(120);
+      }
 
-    resetForm('Abs'); // ← التصحيح الصحيح
-  })
-  .catch(err => {
-    alert('❌ فشل الإرسال');
-    console.error(err);
+      /* المقترح */
+      prog(88, 'كتابة المقترح في «حقول الاستمارة»...');
+      var ta = q(function (dd) { return Array.prototype.find.call(dd.querySelectorAll('textarea'), visible); });
+      if (!ta) {
+        var tab = q(function (dd) { return findByText(dd, ['حقول الاستمارة']); });
+        if (tab) clickEl(tab);
+        ta = await waitFor(function () { return q(function (dd) { return dd.querySelector('textarea'); }); }, 10000);
+      }
+      if (ta) { ta.focus(); ta.value = (data.suggestion || '').slice(0, 1000); fire(ta); }
 
-    if (loadingSpan) loadingSpan.style.display = 'none';
-    if (sendBtn) sendBtn.disabled = false;
-  });
+      /* التحقق والحفظ */
+      var fd2 = formDoc() || fd;
+      var remaining = formSelects(fd2).filter(function (x) { return norm(x.options[x.selectedIndex] ? x.options[x.selectedIndex].text : '') === norm(DEFAULT_OPT); }).length;
+      ov.querySelector('#saifShow').style.display = '';
+      if (remaining || um || !ta) {
+        reveal(true);
+        prog(95, 'تمت التعبئة، لكن ' + (remaining || um || 'حقل المقترح') + (ta ? ' بند لم يُطابق' : ' لم يُعثر عليه') + ' — أكمله في النافذة الظاهرة ثم اضغط «حفظ»', 'user');
+        return;
+      }
+      if (!data.autoSave) { reveal(true); prog(100, 'اكتملت التعبئة 100% — راجع الاستمارة في النافذة الظاهرة ثم اضغط «حفظ»', 'done'); return; }
+
+      prog(96, 'جارٍ الحفظ...');
+      var save = q(function (dd) { return findByText(dd, ['حفظ', 'حفظ الاستمارة', 'حفظ البيانات', 'إرسال']); });
+      if (!save) { reveal(true); prog(97, 'اكتملت التعبئة — لم أجد زر الحفظ، اضغط «حفظ» في النافذة الظاهرة', 'user'); return; }
+      lastAlert = ''; var l1 = loads;
+      clickEl(save);
+      await waitFor(function () { return loads > l1 || lastAlert; }, 15000);
+      await sleep(1000);
+      if (/خطا|خطأ|فشل|error/i.test(lastAlert)) { reveal(true); prog(97, 'رسالة البوابة: ' + lastAlert, 'error'); return; }
+      prog(100, 'تم رفع الاستبانة وحفظها بنجاح ✔' + (lastAlert ? ' — ' + lastAlert : ''), 'done');
+    } catch (e) {
+      if (String(e && e.message) !== 'SAIF_STOP') { console.error(e); prog(0, 'حدث خطأ: ' + e.message, 'error'); }
+    }
+  })();
 }
-
-
-function toggleDesignerInfo() {
-  const info = document.getElementById('designerInfo');
-  info.style.display = info.style.display === 'none' ? 'block' : 'none';
-}
-
 </script>
-<!-- معلومات المصمم -->
-<footer style="text-align: center; padding: 15px; background: #d9f0ff; color: #003f66; font-size: 14px;">
-  👨‍💻 <strong>المصمم: سيف جمال المعولي</strong>
-</footer>
 
-<!-- زر المساعدة ومحتواه -->
-<div style="text-align: center; background: #e0f7ff; padding: 20px;">
-  <button onclick="toggleDesignerInfo()" style="background: #0077b6; color: white; padding: 10px 20px; border-radius: 10px; border: none; font-size: 16px; cursor: pointer;">
-    💡 مساعدة / معلومات المصمم
-  </button>
-  <div id="designerInfo" style="margin-top: 15px; display: none; line-height: 1.8; color: #004b80;">
-    👨‍💻 <strong>المصمم:</strong> سيف جمال المعولي<br>
-    ✉️ <strong>الإيميل:</strong> <a href="mailto:saif2005@moe.om">saif2005@moe.om</a>
-  </div>
-</div>
+<script>
+/* ===== الإعدادات ===== */
+const PORTAL_URL = 'https://www.home.moe.gov.om/';
+const PREFIX = 'المقترح: ';
+const MAXLEN = 1000 - PREFIX.length;
+const LEVELS = [
+  {v:1, t:'متميز', c:'var(--c1)'},
+  {v:2, t:'جيد', c:'var(--c2)'},
+  {v:3, t:'ملائم', c:'var(--c3)'},
+  {v:4, t:'غير ملائم', c:'var(--c4)'},
+  {v:5, t:'يحتاج إلى تدخل', c:'var(--c5)'}
+];
+
+/* ===== بنود الاستمارة ===== */
+const SECTIONS = [
+  {title:'الطلبة: القيم والسلوك والمهارات', items:[
+    'يلتزم الطلبة بالقيم والاتجاهات الإيجابية.',
+    'يظهر الطلبة شعورًا بالولاء والانتماء والاعتزاز بالهوية العمانية.',
+    'يشارك الطلبة في العمل التطوعي لخدمة المجتمع المحلي.',
+    'يمارس الطلبة مبدأ الشورى والثقافة الانتخابية، ويبادرون في إبداء آرائهم ومقترحاتهم في الحياة المدرسية.',
+    'يلتزم الطلبة بأنماط الحياة الصحية والسليمة.',
+    'يظهر الطلبة اتجاهات إيجابية في المحافظة على البيئة ومواردها.',
+    'يبادر الطلبة في طرح الأفكار وإطلاق المشروعات.',
+    'يظهر الطلبة جودة في تخطيط المهام وتنفيذها وإنجازها في وقتها المحدد.'
+  ]},
+  {title:'البيئة المدرسية والرعاية', items:[
+    'تعتمد المدرسة إجراءات الأمن والسلامة وتتعامل بفاعلية مع الحالات الطارئة.',
+    'توفر المدرسة وسائل تعليمية وتقنية ملائمة تدعم جودة التعليم والتعلم المباشر وعن بعد.',
+    'توفر المدرسة برامج وأنشطة لاكتشاف وصقل مواهب الطلبة وإبرازها.',
+    'تحرص المدرسة على رعاية ذوي الإعاقة/الاحتياجات الخاصة.',
+    'تحرص المدرسة على توعية الطلبة بمتطلبات سوق العمل بما يتوافق مع قدراتهم وميولهم.',
+    'تشجع المدرسة على البحث العلمي والالتزام بأخلاقياته.'
+  ]},
+  {title:'القيادة والإدارة المدرسية', items:[
+    'تشرك إدارة المدرسة أعضاء الهيئة التعليمية في بناء رؤية ورسالة المدرسة، وخططها التشغيلية، وتنفيذها.',
+    'تحلل المدرسة نتائج التحصيل الدراسي والتقويم الذاتي وتوظفها في تحسين وتطوير الأداء المدرسي.',
+    'تهتم إدارة المدرسة بتفعيل أساليب تشجع العمل بروح الفريق الواحد بين أعضاء الهيئة التعليمية داخل المدرسة.',
+    'أشعر بالرضا عن عملي بهذه المدرسة.',
+    'تهتم إدارة المدرسة بالمشاريع والمبادرات المقدمة من أعضاء الهيئة التعليمية واستثمار مهاراتهم وقدراتهم.'
+  ]},
+  {title:'التعليم والتعلم والتنمية المهنية', items:[
+    'تحرص المدرسة على متابعة التخطيط للدروس وتنفيذها بصورة تضمن تحقق الأهداف.',
+    'تبذل المدرسة جهودا واضحة لمعالجة ضعف المهارات الأساسية (الكتابة، القراءة، الحساب) لدى الطلبة.',
+    'تتابع المدرسة تطبيق المعلمين لاستراتيجيات تدريس متنوعة وأساليب تقويم تتلاءم مع احتياجات الطلبة وتضمن تعلمهم.',
+    'تحرص المدرسة على وضع إجراءات فعّالة لرفع مستوى دافعية الطلبة للتعلم.',
+    'تحرص إدارة المدرسة على تنفيذ البرامج التدريبية وفق احتياجاتي الفعلية، والتي تساعدني على أداء مهامي.'
+  ]},
+  {title:'التنظيم والتواصل مع المجتمع', items:[
+    'تقوم المدرسة بتوزيع الجدول المدرسي، وحصص الاحتياطي بشكل عادل ومقنن.',
+    'تعمل المدرسة على تفويض بعض الصلاحيات والمهام للعاملين بعدالة.',
+    'تحرص المدرسة على التواصل مع أولياء الأمور فيما يتعلق بمستوى تحصيل أبنائهم.',
+    'يدعم أولياء الأمور تعلم أبنائهم ويساندون المدرسة في جهودها.',
+    'تحرص المدرسة على التواصل مع مؤسسات المجتمع المحلي.',
+    'تحرص المدرسة على متابعة تطبيق أعضاء الهيئة التعليمية لوثيقة تقويم تعلم الطلبة.',
+    'تتخذ المدرسة إجراءات عملية في متابعة انتظام وانضباط الطلبة والعاملين بها.'
+  ]},
+  {title:'الالتزام المهني والشفافية', items:[
+    'يحرص جميع العاملين في المدرسة على الالتزام باللوائح والأنظمة المنظمة للعمل وأخلاقيات مهنة التعليم.',
+    'تعرض المدرسة بصورة دورية نتائج التحصيل الدراسي للطلبة على أفراد المجتمع المدرسي.',
+    'تطلع المدرسة أعضاء الهيئة التعليمية والطلبة وأولياء الأمور على نتائج التقويم الذاتي.',
+    'يؤخذ برأيي عند مناقشة القضايا التربوية في المدرسة.'
+  ]}
+];
+
+/* ===== البناء ===== */
+const $ = s => document.querySelector(s);
+const ALL = [];
+let n = 0;
+SECTIONS.forEach((sec, si) => {
+  const el = document.createElement('section');
+  el.className = 'section';
+  let html = `<div class="shead"><h2><span class="num">${si+1}</span>${sec.title}</h2>
+    <div class="fillall">تعميم: ${LEVELS.map(l=>`<button data-sec="${si}" data-v="${l.v}">${l.t}</button>`).join('')}</div></div>`;
+  sec.items.forEach(t => {
+    n++; ALL.push({n, text:t, sec:si});
+    html += `<div class="item" id="it${n}"><div class="n">${n}</div><div>
+      <div class="q">${t} <span class="req">*</span></div>
+      <div class="opts">${LEVELS.map(l=>`<label><input type="radio" name="q${n}" value="${l.v}"><span>${l.v} - ${l.t}</span></label>`).join('')}</div>
+    </div></div>`;
+  });
+  el.innerHTML = html;
+  $('#sections').appendChild(el);
+});
+$('#legend').innerHTML = LEVELS.map(l=>`<span style="background:${l.c}">${l.v} - ${l.t}</span>`).join('');
+$('#max').textContent = MAXLEN;
+$('#suggestion').maxLength = MAXLEN;
+$('#today').textContent = new Date().toLocaleDateString('ar-OM',{year:'numeric',month:'long',day:'numeric'});
+
+/* زر المفضلة */
+const BOOKMARKLET = 'javascript:' + encodeURIComponent('(' + SAIF_UPLOADER.toString() + ')();void 0;');
+const bm = $('#bookmarklet');
+bm.href = BOOKMARKLET;
+bm.addEventListener('click', e => { e.preventDefault(); toast('اسحب هذا الزر إلى شريط المفضلة — لا تضغطه هنا'); });
+$('#copyBm').onclick = () => copyText(BOOKMARKLET).then(()=>toast('تم نسخ رمز الزر'));
+const isSetup = () => { try{ return localStorage.getItem('saif_bm_ok')==='1'; }catch(e){ return false; } };
+function lock(){ document.body.classList.add('locked'); $('#setupModal').classList.add('show'); }
+window.SAIF_UNLOCK = () => {
+  try{ localStorage.setItem('saif_bm_ok','1'); }catch(e){}
+  document.body.classList.remove('locked');
+  $('#setupModal').classList.remove('show');
+  toast('🔓 تم فتح الاستبانة — زر الرفع جاهز');
+};
+bm.addEventListener('dragend', () => { $('#step2').scrollIntoView({block:'nearest'}); });
+if(!isSetup()) lock();
+
+/* ===== الحفظ المؤقت ===== */
+function collect(){
+  return {
+    answers: ALL.map(a => { const r=document.querySelector(`input[name="q${a.n}"]:checked`); return {n:a.n, text:a.text, level:r?+r.value:0}; }),
+    suggestion: $('#suggestion').value.trim()
+  };
+}
+function store(){ try{ localStorage.setItem('saif_teacher_survey_v2', JSON.stringify(collect())); }catch(e){} }
+function restore(){
+  try{
+    const d = JSON.parse(localStorage.getItem('saif_teacher_survey_v2')||'null'); if(!d) return;
+    d.answers.forEach(a=>{ if(a.level){ const r=document.querySelector(`input[name="q${a.n}"][value="${a.level}"]`); if(r) r.checked=true; }});
+    $('#suggestion').value = d.suggestion||'';
+  }catch(e){}
+}
+function refresh(){
+  const d = collect(); let done=0;
+  d.answers.forEach(a=>{ const it=$('#it'+a.n); it.classList.toggle('ok',!!a.level); if(a.level){done++; it.classList.remove('missing');} });
+  $('#topCount').textContent = `${done} / ${ALL.length}`;
+  $('#topBar').style.width = (done/ALL.length*100)+'%';
+  $('#cnt').textContent = $('#suggestion').value.length;
+  store();
+}
+document.addEventListener('change', e=>{ if(e.target.matches('.opts input')) refresh(); });
+$('#suggestion').addEventListener('input', refresh);
+document.querySelectorAll('.fillall button').forEach(b=>b.onclick=()=>{
+  ALL.filter(a=>a.sec==+b.dataset.sec).forEach(a=>{ document.querySelector(`input[name="q${a.n}"][value="${b.dataset.v}"]`).checked=true; });
+  refresh();
+});
+restore(); refresh();
+
+function toast(m){ const t=$('#toast'); t.textContent=m; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',3500); }
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('show'));
+function copyText(s){
+  if(navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(s).catch(()=>fallbackCopy(s));
+  return Promise.resolve(fallbackCopy(s));
+}
+function fallbackCopy(s){ const t=document.createElement('textarea'); t.value=s; document.body.appendChild(t); t.select(); try{document.execCommand('copy');}catch(e){} t.remove(); }
+
+/* ===== الرفع ===== */
+$('#uploadBtn').onclick = () => {
+  const d = collect();
+  const miss = d.answers.filter(a=>!a.level);
+  if(miss.length){
+    miss.forEach(a=>$('#it'+a.n).classList.add('missing'));
+    $('#it'+miss[0].n).scrollIntoView({behavior:'smooth',block:'center'});
+    return toast(`يوجد ${miss.length} بند بدون تقدير`);
+  }
+  if(!d.suggestion){ $('#suggestion').focus(); return toast('حقل المقترح مطلوب'); }
+  if(!isSetup()) return lock();
+  $('#loginModal').classList.add('show'); $('#user').focus();
+};
+
+let lastCode = '';
+$('#goBtn').onclick = () => {
+  const user = $('#user').value.trim(), pass = $('#pass').value;
+  if(!user || !pass) return toast('أدخل اسم المستخدم وكلمة المرور');
+  const d = collect();
+  const payload = { v:2, user, pass, autoSave: $('#autoSave').checked, answers: d.answers, suggestion: PREFIX + d.suggestion };
+  lastCode = 'SAIF1:' + btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  $('#pass').value = '';
+  copyText(lastCode);
+  $('#loginModal').classList.remove('show');
+  setProg(0, 'بانتظار الضغط على زر «رفع الاستبانة» في البوابة...', '');
+  $('#progModal').classList.add('show');
+  window.open(PORTAL_URL, 'saif_portal');
+};
+$('#recopy').onclick = () => { if(lastCode) copyText(lastCode).then(()=>toast('تم النسخ')); };
+
+function setProg(p, msg, kind){
+  $('#pBar').style.width = p+'%';
+  $('#pPct').textContent = Math.round(p)+'%';
+  const m = $('#pMsg'); m.textContent = msg; m.className = 'pmsg ' + (kind||'');
+}
+window.addEventListener('message', e=>{
+  const d = e.data; if(!d || d.type!=='SAIF_SURVEY_PROGRESS') return;
+  $('#howto').style.display = 'none';
+  setProg(d.pct, d.msg, d.kind);
+  if(d.kind==='done'){ toast('اكتمل الرفع بنجاح ✔'); lastCode=''; }
+});
+
+/* ===== Excel / طباعة / مسح ===== */
+$('#excelBtn').onclick = () => {
+  const d = collect(); const L = v => { const l=LEVELS.find(x=>x.v===v); return l?`${l.v} - ${l.t}`:''; };
+  let rows = d.answers.map(a=>`<tr><td>${a.n}</td><td>${a.text}</td><td>${L(a.level)}</td></tr>`).join('');
+  rows += `<tr><td></td><td><b>المقترح</b></td><td>${d.suggestion.replace(/</g,'&lt;')}</td></tr>`;
+  const html = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
+    <table border="1"><tr><th colspan="3">وزارة التعليم - المديرية العامة للتعليم بمحافظة جنوب الباطنة</th></tr>
+    <tr><th colspan="3">استبانة استطلاع آراء أعضاء الهيئة التعليمية في الحياة المدرسية</th></tr>
+    <tr><th>م</th><th>البند</th><th>التقدير</th></tr>${rows}</table></body></html>`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['﻿'+html],{type:'application/vnd.ms-excel'}));
+  a.download = 'استبانة_آراء_المعلمين.xls'; a.click();
+};
+$('#printBtn').onclick = () => window.print();
+$('#clearBtn').onclick = () => {
+  if(!confirm('مسح جميع الإجابات؟')) return;
+  document.querySelectorAll('.opts input').forEach(i=>i.checked=false);
+  $('#suggestion').value=''; refresh();
+};
+</script>
 </body>
 </html>
