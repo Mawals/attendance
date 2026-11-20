@@ -59,6 +59,7 @@ body.locked .wrap{filter:blur(3px);pointer-events:none;user-select:none}
 .stp.last{background:#e9f7f1;border:1.5px solid var(--teal);animation:pulse 1.6s infinite}
 .stp.last .sn{background:var(--teal)}
 .dropzone{text-align:center}
+.links{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.links a{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:4px 12px;text-decoration:none;color:var(--navy);font-weight:700;font-size:13px}.links a:hover{border-color:var(--navy)}
 .alt{margin-top:14px;font-size:13px;border-top:1px dashed var(--line);padding-top:10px}
 .alt summary{cursor:pointer;color:var(--navy);font-weight:700}
 .alt ol{margin:8px 0 0;padding-right:20px;line-height:2.1}
@@ -163,7 +164,7 @@ body.is-mobile .desk{display:none}
 @media print{.sticky,.actions,.fillall,.setup{display:none}body{background:#fff}.section{box-shadow:none;border:1px solid #ccc}}
 </style>
 </head>
-<body>
+<body id="saif-survey-app">
 <div class="wrap">
 
   <header class="header">
@@ -230,8 +231,9 @@ body.is-mobile .desk{display:none}
     <div class="field"><label>اسم المستخدم</label><input id="user" autocomplete="username"></div>
     <div class="field"><label>كلمة المرور</label><input id="pass" type="password" autocomplete="current-password"></div>
     <label class="chk"><input type="checkbox" id="autoSave" checked> حفظ الاستمارة تلقائيًا بعد التعبئة</label>
+    <label class="chk" style="margin-top:-8px"><input type="checkbox" id="showPortal"> عرض البوابة أثناء الرفع (بدلًا من الخلفية)</label>
     <div class="row">
-      <button class="btn primary" id="goBtn">متابعة</button>
+      <button class="btn primary" id="goBtn">دخول ورفع</button>
       <button class="btn ghost" data-close>إلغاء</button>
     </div>
   </div>
@@ -242,20 +244,13 @@ body.is-mobile .desk{display:none}
   <div class="box">
     <h3>رفع الاستبانة إلى البوابة</h3>
     <div class="note" id="howto">
-      ✔ تم تجهيز بياناتك ونسخها، وفُتحت البوابة في تبويب جديد.
-      <ol>
-        <li>انتقل إلى تبويب البوابة.</li>
-        <li class="desk">اضغط زر <b>«⬆ رفع الاستبانة»</b> في شريط المفضلة.</li>
-        <li class="mob">اضغط شريط العنوان واكتب <b>رفع</b> ثم اختر «رفع الاستبانة» ⭐ من الاقتراحات (في آيفون: من العلامات).</li>
-        <li>إذا ظهر مربع لصق البيانات: الصق (<span class="desk">Ctrl + V</span><span class="mob">ضغطة مطولة ← لصق</span>) ثم «موافق».</li>
-      </ol>
-      سيتم الدخول والرفع في الخلفية، ويظهر التقدّم هنا وفي البوابة.
+      ✔ تم إرسال بياناتك إلى أداة الرفع، وتُفتح البوابة الآن في الخلفية.
+      <br>يمكنك متابعة التقدّم هنا. إذا طلبت البوابة رمز تحقق أو توقفت عند خطوة، افتح تبويب البوابة وأكمل الخطوة وسيتابع الرفع تلقائيًا.
     </div>
     <div class="pbar"><i id="pBar"></i></div>
     <div class="pct" id="pPct">0%</div>
     <div class="pmsg" id="pMsg">بانتظار الضغط على زر «رفع الاستبانة» في البوابة...</div>
     <div class="row" style="margin-top:16px">
-      <button class="btn ghost" id="recopy">نسخ البيانات مرة أخرى</button>
       <button class="btn ghost" data-close>إغلاق</button>
     </div>
   </div>
@@ -266,43 +261,25 @@ body.is-mobile .desk{display:none}
   <div class="box" style="max-width:540px">
     <div style="text-align:center">
       <div class="lockicon">🔒</div>
-      <h3>الاستبانة مقفلة حتى إضافة زر الرفع</h3>
-      <p class="sub">ثلاث خطوات بسيطة — مرة واحدة فقط</p>
-    </div>
-    <div class="desk">
-
-    <div class="stp"><span class="sn">1</span><div>لإظهار شريط المفضلة اضغط <b>Ctrl + Shift + B</b></div></div>
-
-    <div class="stp"><span class="sn">2</span><div>اسحب زر <b>«رفع الاستبانة»</b> وأفلته في شريط المفضلة</div></div>
-    <div class="dropzone">
-      <div class="bar-mock"><span>★</span><span class="slot">أفلت الزر هنا</span></div>
-      <div class="arrow">⬆</div>
-      <a class="bm big" id="bookmarklet" href="#" draggable="true">⬆ رفع الاستبانة</a>
+      <h3>الاستبانة مقفلة حتى تثبيت أداة الرفع</h3>
+      <p class="sub">خطوات تُنفَّذ مرة واحدة فقط على جهازك</p>
     </div>
 
-    <div class="stp last" id="step2"><span class="sn">3</span><div>اضغط <b>«رفع الاستبانة»</b> في شريط المفضلة لفتح الاستبانة 🔓</div></div>
+    <div class="stp"><span class="sn">1</span><div>ثبّت إضافة <b>Tampermonkey</b> لمتصفحك:
+      <div class="links">
+        <a href="https://addons.mozilla.org/firefox/addon/tampermonkey/" target="_blank">فايرفوكس</a>
+        <a href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank">كروم</a>
+        <a href="https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd" target="_blank">إيدج</a>
+      </div></div></div>
 
-    <details class="alt"><summary>طريقة بديلة بدون سحب</summary>
-      <ol>
-        <li>اضغط <button class="btn ghost" style="padding:3px 10px;font-size:12px" id="copyBm">نسخ رمز الزر</button></li>
-        <li>انقر بالزر الأيمن على شريط المفضلة ← اختر <b>إضافة صفحة / إضافة علامة</b>.</li>
-        <li>في خانة الاسم اكتب: <b>رفع الاستبانة</b></li>
-        <li>في خانة العنوان (URL) الصق الرمز بـ <b>Ctrl + V</b> ثم احفظ.</li>
-        <li>اضغط «رفع الاستبانة» في شريط المفضلة لفتح الاستبانة.</li>
-      </ol>
-    </details>
-    </div>
+    <div class="stp"><span class="sn">2</span><div>اضغط الزر التالي ثم اختر <b>«تثبيت / Install»</b>:
+      <div style="margin-top:6px"><a class="bm" href="saif-survey.user.js" target="_blank">⬇ تثبيت أداة رفع الاستبانة</a></div></div></div>
 
-    <div class="mob">
-      <div class="stp"><span class="sn">1</span><div>اضغط: <button class="btn primary" style="padding:6px 14px;font-size:14px" id="copyBm2">نسخ رمز الزر</button></div></div>
-      <div class="stp"><span class="sn">2</span><div>من قائمة المتصفح ⋮ اضغط ⭐ لإضافة الصفحة، ثم اضغط <b>تعديل</b>:
-        <br>• الاسم: <b>رفع الاستبانة</b>
-        <br>• العنوان (URL): امسح العنوان الموجود <b>بالكامل</b> ثم الصق الرمز، واحفظ.</div></div>
-      <div class="stp last" id="step2m"><span class="sn">3</span><div>لفتح الاستبانة:
-        <br>• <b>أندرويد (Chrome / Edge):</b> وأنت في هذه الصفحة، اضغط على شريط العنوان واكتب <b>رفع</b>، ثم اختر «رفع الاستبانة» الذي بجانبه ⭐ من الاقتراحات.
-        <br><span style="color:#b36b00">⚠ لا تفتحه من قائمة العلامات/الإشارات المرجعية — في أندرويد لا يعمل إلا من شريط العنوان.</span>
-        <br>• <b>آيفون (Safari):</b> افتح العلامات 📖 واضغط «رفع الاستبانة».</div></div>
-      <div class="note" style="margin-top:10px">ملاحظة: متصفح فايرفوكس على الهاتف لا يدعم هذه الأزرار — استخدم Chrome أو Edge أو Safari، أو استخدم الحاسوب.</div>
+    <div class="stp last"><span class="sn">3</span><div>حدّث هذه الصفحة (<b>F5</b>) وستنفتح الاستبانة تلقائيًا 🔓</div></div>
+
+    <div class="note" style="margin-top:10px">
+      <b>في كروم وإيدج:</b> إذا لم تنفتح بعد التحديث: افتح صفحة الإضافات ← تفاصيل Tampermonkey ← فعّل <b>«السماح بالنصوص البرمجية للمستخدم / Allow User Scripts»</b> ثم حدّث الصفحة.
+      <br><b>على الهاتف:</b> استخدم فايرفوكس للأندرويد وثبّت فيه Tampermonkey بنفس الخطوات.
     </div>
   </div>
 </div>
@@ -310,317 +287,7 @@ body.is-mobile .desk{display:none}
 <div class="toast" id="toast"></div>
 
 <script>
-/* =====================================================================
-   أداة الرفع — تعمل داخل البوابة عند الضغط على زر المفضلة
-   تصميم: سيف جمال المعولي — مدرسة معولة بن شمس
-   ===================================================================== */
-function SAIF_UPLOADER() {
-  if (!/moe\.gov\.om$/i.test(location.hostname)) {
-    if (typeof window.SAIF_UNLOCK === 'function') { window.SAIF_UNLOCK(); return; }
-    alert('اضغط هذا الزر وأنت داخل البوابة التعليمية.'); return;
-  }
-  if (window.__saifRunning) { alert('أداة الرفع تعمل بالفعل.'); return; }
-  window.__saifRunning = true;
-
-  var LEVEL_TXT = { 1: 'متميز', 2: 'جيد', 3: 'ملائم', 4: 'غير ملائم', 5: 'يحتاج إلى تدخل' };
-  var DEFAULT_OPT = 'غير مقيم';
-  var STEPS = [
-    { name: 'أعمالي', t: ['أعمالي'] },
-    { name: 'تطوير الأداء المدرسي', t: ['تطوير الأداء المدرسي'] },
-    { name: 'استبانات تطوير الأداء', t: ['استبانات تطوير الأداء', 'استبانات تطوير الأداء المدرسي'] },
-    { name: 'عرض', t: ['عرض'] },
-    { name: 'إضافة', t: ['إضافة', '+ إضافة', '+إضافة', 'اضافة'] },
-    { name: 'اختيار الاستمارة', form: true }
-  ];
-
-  var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
-  var norm = function (s) {
-    return (s || '').replace(/[ً-ٰٟـ]/g, '')
-      .replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/ؤ/g, 'و').replace(/ئ/g, 'ي')
-      .replace(/[*.,،؛;:()\[\]\/\\\-–_"'«»!?؟+]/g, ' ').replace(/\s+/g, ' ').trim();
-  };
-  var visible = function (el) { return !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length)); };
-
-  /* ---------- الواجهة ---------- */
-  var st = document.createElement('style');
-  st.textContent =
-    '#saifOv{position:fixed;inset:0;z-index:2147483646;background:rgba(10,30,45,.82);display:flex;align-items:center;justify-content:center;font-family:Tahoma,"Segoe UI",sans-serif;direction:rtl}' +
-    '#saifOv.peek{background:transparent;pointer-events:none;align-items:flex-start;padding-top:6px}' +
-    '#saifOv .b{background:#fff;border-radius:18px;padding:24px;width:min(470px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;pointer-events:auto}' +
-    '#saifOv.peek .b{padding:10px 14px;border:2px solid #e0a100}' +
-    '#saifOv h3{margin:0 0 4px;color:#0f3d5e;font-size:19px}#saifOv .s{color:#6b7c8a;font-size:12px;margin-bottom:12px}' +
-    '#saifOv .bar{height:16px;background:#dde6ee;border-radius:10px;overflow:hidden}' +
-    '#saifOv .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#14897a,#0f8a5f);transition:width .35s}' +
-    '#saifOv .p{font-size:30px;font-weight:800;color:#0f3d5e;margin:8px 0 2px}#saifOv .m{min-height:22px;font-size:14px;color:#1d2b36}' +
-    '#saifOv .m.user{color:#b36b00;font-weight:bold}#saifOv .m.error{color:#d64545;font-weight:bold}#saifOv .m.done{color:#0f8a5f;font-weight:bold}' +
-    '#saifOv button{margin:12px 4px 0;border:1px solid #dde6ee;background:#fff;border-radius:10px;padding:6px 16px;cursor:pointer;font-family:inherit}' +
-    '#saifOv .f{margin-top:10px;font-size:11px;color:#8a99a6}' +
-    '#saifFrame{position:fixed;left:-5000px;top:0;width:1280px;height:900px;border:0;opacity:0;pointer-events:none;z-index:2147483645;background:#fff}' +
-    '#saifFrame.show{left:3vw;top:12vh;width:94vw;height:85vh;opacity:1;pointer-events:auto;border:3px solid #e0a100;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.4)}';
-  document.documentElement.appendChild(st);
-  var ov = document.createElement('div'); ov.id = 'saifOv';
-  ov.innerHTML = '<div class="b"><h3>رفع استبانة آراء أعضاء الهيئة التعليمية</h3>' +
-    '<div class="s">يتم العمل في الخلفية — لا تغلق هذا التبويب</div>' +
-    '<div class="bar"><i></i></div><div class="p">0%</div><div class="m"></div>' +
-    '<button id="saifShow" style="display:none">عرض الاستمارة</button><button id="saifStop">إيقاف</button>' +
-    '<div class="f">تصميم: سيف جمال المعولي — مدرسة معولة بن شمس</div></div>';
-  document.body.appendChild(ov);
-  var ifr = document.createElement('iframe'); ifr.id = 'saifFrame';
-  document.body.appendChild(ifr);
-
-  var stopped = false, lastAlert = '', loads = 0;
-  function cleanup() { stopped = true; window.__saifRunning = false; ov.remove(); ifr.remove(); st.remove(); }
-  ov.querySelector('#saifStop').onclick = cleanup;
-  ov.querySelector('#saifShow').onclick = function () { reveal(!ifr.classList.contains('show')); };
-  function reveal(on) {
-    ifr.classList.toggle('show', on); ov.classList.toggle('peek', on);
-    ov.querySelector('#saifShow').textContent = on ? 'إخفاء الاستمارة' : 'عرض الاستمارة';
-  }
-  function prog(p, m, k) {
-    k = k || 'info';
-    ov.querySelector('.bar i').style.width = p + '%';
-    ov.querySelector('.p').textContent = Math.round(p) + '%';
-    var e = ov.querySelector('.m'); e.textContent = m; e.className = 'm ' + k;
-    var done = (k === 'done' || k === 'error');
-    ov.querySelector('#saifStop').textContent = done ? 'إغلاق' : 'إيقاف';
-    try { if (window.opener) window.opener.postMessage({ type: 'SAIF_SURVEY_PROGRESS', pct: p, msg: m, kind: k }, '*'); } catch (x) {}
-  }
-  function fail(m) { prog(0, m, 'error'); ov.querySelector('#saifShow').style.display = ''; throw new Error('SAIF_STOP'); }
-
-  /* ---------- الإطار الخلفي ---------- */
-  function patchWin(w) {
-    try {
-      if (!w.__saifP) {
-        w.__saifP = 1;
-        w.open = function (u) { if (u) w.location.href = u; return w; };
-        w.alert = function (m) { lastAlert = String(m); };
-        w.confirm = function () { return true; };
-      }
-      for (var i = 0; i < w.frames.length; i++) patchWin(w.frames[i]);
-    } catch (e) {}
-  }
-  ifr.addEventListener('load', function () { loads++; patchWin(ifr.contentWindow); });
-  function docs() {
-    var out = [];
-    (function walk(w) { try { out.push(w.document); for (var i = 0; i < w.frames.length; i++) walk(w.frames[i]); } catch (e) {} })(ifr.contentWindow);
-    return out;
-  }
-  function q(fn) { var d = docs(); for (var i = 0; i < d.length; i++) { var r = fn(d[i]); if (r) return r; } return null; }
-  async function waitFor(fn, ms) {
-    var t = Date.now();
-    while (Date.now() - t < ms) { if (stopped) throw new Error('SAIF_STOP'); patchWin(ifr.contentWindow); var r = fn(); if (r) return r; await sleep(300); }
-    return null;
-  }
-  function findByText(doc, targets, tol) {
-    tol = tol == null ? 6 : tol;
-    var els = doc.querySelectorAll('a,button,input[type=button],input[type=submit],span,td,li,div,label,font,b,p,h3,h4');
-    var best = null, bestLen = 1e9;
-    for (var i = 0; i < els.length; i++) {
-      var el = els[i]; if (!visible(el)) continue;
-      var t = norm(el.tagName === 'INPUT' ? el.value : el.textContent);
-      if (!t || t.length > 120) continue;
-      for (var j = 0; j < targets.length; j++) {
-        var nt = norm(targets[j]);
-        if ((t === nt || (t.indexOf(nt) > -1 && t.length <= nt.length + tol)) && t.length <= bestLen) { best = el; bestLen = t.length; }
-      }
-    }
-    if (best) { var a = best.closest('a,button'); if (a && visible(a)) return a; }
-    return best;
-  }
-  function fire(el) { ['input', 'change'].forEach(function (t) { el.dispatchEvent(new Event(t, { bubbles: true })); }); }
-  function clickEl(el) {
-    var a = el.closest && el.closest('a'); if (a && a.target && a.target !== '_self') a.target = '_self';
-    if (el.form && el.form.target) el.form.target = '_self';
-    var w = el.ownerDocument.defaultView;
-    ['mouseover', 'mousedown', 'mouseup'].forEach(function (t) { el.dispatchEvent(new w.MouseEvent(t, { bubbles: true, cancelable: true, view: w })); });
-    el.click();
-  }
-  var findPw = function () { return q(function (d) { return Array.prototype.find.call(d.querySelectorAll('input[type=password]'), visible); }); };
-  var formSelects = function (d) {
-    var dn = norm(DEFAULT_OPT);
-    return Array.prototype.filter.call(d.querySelectorAll('select'), function (s) {
-      return Array.prototype.some.call(s.options, function (o) { return norm(o.text) === dn; });
-    });
-  };
-  var formDoc = function () { return q(function (d) { return formSelects(d).length >= 5 ? d : null; }); };
-
-  /* ---------- المطابقة ---------- */
-  function rowLabel(sel) {
-    var row = sel.closest('tr') || sel.parentElement.parentElement;
-    var c = row.cloneNode(true);
-    c.querySelectorAll('select,script,style').forEach(function (x) { x.remove(); });
-    return norm(c.textContent);
-  }
-  function sim(a, b) {
-    var A = a.split(' '), B = {}, i = 0, u = {};
-    b.split(' ').forEach(function (w) { B[w] = 1; });
-    A.forEach(function (w) { if (B[w] && !u[w]) { i++; u[w] = 1; } });
-    var na = Object.keys(A.reduce(function (o, w) { o[w] = 1; return o; }, {})).length;
-    return (2 * i) / (na + Object.keys(B).length || 1);
-  }
-  function bestItem(label, answers) {
-    var best = null, sc = 0;
-    answers.forEach(function (a) { var s = sim(label, norm(a.text)); if (s > sc) { sc = s; best = a; } });
-    return sc >= 0.55 ? best : null;
-  }
-  function pickOpt(sel, level) {
-    var want = norm(LEVEL_TXT[level]);
-    for (var i = 0; i < sel.options.length; i++) {
-      var t = norm(sel.options[i].text).replace(/^[0-9٠-٩]+\s*/, '');
-      if (t === want) return sel.options[i];
-    }
-    for (var j = 0; j < sel.options.length; j++) if (norm(sel.options[j].text).indexOf(String(level)) === 0) return sel.options[j];
-    return null;
-  }
-
-  /* ---------- البيانات ---------- */
-  async function getData() {
-    var code = '';
-    if (!/firefox/i.test(navigator.userAgent)) { try { code = await navigator.clipboard.readText(); } catch (e) {} }
-    if (!/^SAIF1:/.test((code || '').trim())) code = prompt('اضغط Ctrl + V للصق بيانات الاستبانة، ثم اضغط «حسنًا»:') || '';
-    code = code.trim();
-    if (code.indexOf('SAIF1:') !== 0) return null;
-    try { return JSON.parse(decodeURIComponent(escape(atob(code.slice(6))))); } catch (e) { return null; }
-  }
-
-  /* ---------- التنفيذ ---------- */
-  (async function main() {
-    try {
-      prog(1, 'جارٍ قراءة بيانات الاستبانة...');
-      var data = await getData();
-      try { navigator.clipboard.writeText(''); } catch (e) {}
-      if (!data) fail('لم يتم العثور على بيانات الاستبانة — ارجع لصفحة الاستبانة واضغط «رفع إلى البوابة» أولًا');
-
-      prog(3, 'جارٍ فتح البوابة في الخلفية...');
-      ifr.src = location.href.split('#')[0];
-      var ok = await waitFor(function () { try { return loads > 0 && ifr.contentDocument && ifr.contentDocument.body; } catch (e) { return false; } }, 25000);
-      if (!ok) fail('البوابة لم تسمح بالتحميل في الخلفية');
-      await sleep(800);
-
-      /* تسجيل الدخول */
-      var pw = findPw();
-      if (pw) {
-        if (!data.user || !data.pass) { reveal(true); prog(5, 'سجّل الدخول في النافذة الظاهرة، وسيكمل الرفع تلقائيًا', 'user'); }
-        else {
-          prog(5, 'جارٍ تسجيل الدخول...');
-          var d = pw.ownerDocument;
-          var ins = Array.prototype.filter.call(d.querySelectorAll('input'), function (i) { return visible(i) && /^(text|email|tel|number|)$/i.test(i.getAttribute('type') || 'text'); });
-          var before = ins.filter(function (i) { return i.compareDocumentPosition(pw) & Node.DOCUMENT_POSITION_FOLLOWING; });
-          var u = before[before.length - 1] || ins[0];
-          if (u) { u.focus(); u.value = data.user; fire(u); }
-          pw.focus(); pw.value = data.pass; fire(pw);
-          var cap = ins.find(function (i) { return i !== u && /captcha|code|verif|رمز/i.test((i.name || '') + (i.id || '') + (i.placeholder || '')); }) || d.querySelector('img[src*="aptcha" i],img[id*="aptcha" i]');
-          if (cap) { reveal(true); prog(6, 'اكتب رمز التحقق في النافذة الظاهرة ثم اضغط «دخول»', 'user'); }
-          else {
-            var btn = findByText(d, ['دخول', 'تسجيل الدخول', 'تسجيل دخول', 'Login', 'Sign in']) || (pw.form && pw.form.querySelector('[type=submit]'));
-            if (btn) clickEl(btn); else if (pw.form) pw.form.submit();
-          }
-        }
-        data.pass = '';
-        var l0 = loads;
-        var out = await waitFor(function () { return loads > l0 && !findPw(); }, 120000);
-        if (!out) fail('تعذر تسجيل الدخول — تحقق من اسم المستخدم وكلمة المرور');
-        reveal(false);
-        await sleep(1200);
-      }
-      data.pass = '';
-
-      /* التنقل */
-      var i = 0, stepT = Date.now();
-      while (!formDoc()) {
-        if (stopped) return;
-        var el = null, hit = -1;
-        for (var j = i; j < STEPS.length && hit < 0; j++) {
-          if (j > i && Date.now() - stepT < 12000) break;
-          var s = STEPS[j];
-          if (s.form) {
-            var key = norm('استطلاع آراء أعضاء الهيئة التعليمية');
-            var selF = q(function (dd) {
-              return Array.prototype.find.call(dd.querySelectorAll('select'), function (x) { return Array.prototype.some.call(x.options, function (o) { return norm(o.text).indexOf(key) > -1; }); });
-            });
-            if (selF) {
-              var opt = Array.prototype.find.call(selF.options, function (o) { return norm(o.text).indexOf(key) > -1; });
-              if (selF.value !== opt.value) { selF.value = opt.value; fire(selF); }
-              hit = j;
-            } else {
-              el = q(function (dd) { return findByText(dd, ['استبانة استطلاع آراء أعضاء الهيئة التعليمية في الحياة المدرسية', 'استطلاع آراء أعضاء الهيئة التعليمية'], 40); });
-              if (el) { clickEl(el); hit = j; }
-            }
-          } else {
-            el = q(function (dd) { return findByText(dd, s.t); });
-            if (el) { clickEl(el); hit = j; }
-          }
-        }
-        if (hit >= 0) {
-          i = hit + 1; stepT = Date.now();
-          prog(5 + Math.round(i / STEPS.length * 20), STEPS[i] ? 'تم «' + STEPS[hit].name + '» ← جارٍ فتح «' + STEPS[i].name + '»' : 'جارٍ فتح الاستمارة...');
-          await sleep(1800);
-          await waitFor(function () { try { return ifr.contentDocument.readyState === 'complete'; } catch (e) { return true; } }, 15000);
-          continue;
-        }
-        if (i >= STEPS.length && Date.now() - stepT > 8000 && Date.now() - stepT < 9000) {
-          var go = q(function (dd) { return findByText(dd, ['عرض', 'التالي', 'بدء', 'متابعة']); }); if (go) clickEl(go);
-        }
-        if (Date.now() - stepT > 45000) {
-          reveal(true);
-          prog(5 + Math.round(i / STEPS.length * 20), STEPS[i] ? 'لم أجد «' + STEPS[i].name + '» — اضغطه في النافذة الظاهرة وسأكمل تلقائيًا' : 'افتح الاستمارة في النافذة الظاهرة وسأكملها تلقائيًا', 'user');
-        }
-        await sleep(500);
-      }
-      reveal(false);
-
-      /* تعبئة البنود */
-      var fd = formDoc(), sels = formSelects(fd), total = sels.length, um = 0;
-      prog(28, 'تم فتح الاستمارة — ' + total + ' بندًا');
-      for (var k = 0; k < total; k++) {
-        if (stopped) return;
-        var m = bestItem(rowLabel(sels[k]), data.answers);
-        var o = m && pickOpt(sels[k], m.level);
-        if (o) { sels[k].value = o.value; fire(sels[k]); } else um++;
-        prog(28 + Math.round((k + 1) / total * 57), 'تعبئة البند ' + (k + 1) + ' من ' + total);
-        await sleep(120);
-      }
-
-      /* المقترح */
-      prog(88, 'كتابة المقترح في «حقول الاستمارة»...');
-      var ta = q(function (dd) { return Array.prototype.find.call(dd.querySelectorAll('textarea'), visible); });
-      if (!ta) {
-        var tab = q(function (dd) { return findByText(dd, ['حقول الاستمارة']); });
-        if (tab) clickEl(tab);
-        ta = await waitFor(function () { return q(function (dd) { return dd.querySelector('textarea'); }); }, 10000);
-      }
-      if (ta) { ta.focus(); ta.value = (data.suggestion || '').slice(0, 1000); fire(ta); }
-
-      /* التحقق والحفظ */
-      var fd2 = formDoc() || fd;
-      var remaining = formSelects(fd2).filter(function (x) { return norm(x.options[x.selectedIndex] ? x.options[x.selectedIndex].text : '') === norm(DEFAULT_OPT); }).length;
-      ov.querySelector('#saifShow').style.display = '';
-      if (remaining || um || !ta) {
-        reveal(true);
-        prog(95, 'تمت التعبئة، لكن ' + (remaining || um || 'حقل المقترح') + (ta ? ' بند لم يُطابق' : ' لم يُعثر عليه') + ' — أكمله في النافذة الظاهرة ثم اضغط «حفظ»', 'user');
-        return;
-      }
-      if (!data.autoSave) { reveal(true); prog(100, 'اكتملت التعبئة 100% — راجع الاستمارة في النافذة الظاهرة ثم اضغط «حفظ»', 'done'); return; }
-
-      prog(96, 'جارٍ الحفظ...');
-      var save = q(function (dd) { return findByText(dd, ['حفظ', 'حفظ الاستمارة', 'حفظ البيانات', 'إرسال']); });
-      if (!save) { reveal(true); prog(97, 'اكتملت التعبئة — لم أجد زر الحفظ، اضغط «حفظ» في النافذة الظاهرة', 'user'); return; }
-      lastAlert = ''; var l1 = loads;
-      clickEl(save);
-      await waitFor(function () { return loads > l1 || lastAlert; }, 15000);
-      await sleep(1000);
-      if (/خطا|خطأ|فشل|error/i.test(lastAlert)) { reveal(true); prog(97, 'رسالة البوابة: ' + lastAlert, 'error'); return; }
-      prog(100, 'تم رفع الاستبانة وحفظها بنجاح ✔' + (lastAlert ? ' — ' + lastAlert : ''), 'done');
-    } catch (e) {
-      if (String(e && e.message) !== 'SAIF_STOP') { console.error(e); prog(0, 'حدث خطأ: ' + e.message, 'error'); }
-    }
-  })();
-}
-</script>
-
-<script>
 /* ===== الإعدادات ===== */
-const PORTAL_URL = 'https://home.moe.gov.om/';
 const PREFIX = 'المقترح: ';
 const MAXLEN = 1000 - PREFIX.length;
 const LEVELS = [
@@ -706,27 +373,14 @@ $('#max').textContent = MAXLEN;
 $('#suggestion').maxLength = MAXLEN;
 $('#today').textContent = new Date().toLocaleDateString('ar-OM',{year:'numeric',month:'long',day:'numeric'});
 
-/* زر المفضلة */
-/* زر قصير يحمّل أداة الرفع من نفس موقع الاستبانة (uploader.js) — ويتحدث تلقائيًا */
-const UPLOADER_URL = new URL('uploader.js', location.href).href;
-const BOOKMARKLET = location.protocol === 'file:'
-  ? 'javascript:' + encodeURIComponent('(' + SAIF_UPLOADER.toString() + ')();void 0;')
-  : "javascript:(function(s){if(window.SAIF_UNLOCK){SAIF_UNLOCK();return}s=document.createElement('script');s.charset='utf-8';s.src='" + UPLOADER_URL + "?v='.concat(Date.now());s.onerror=function(){alert('\\u062a\\u0639\\u0630\\u0631\\u0020\\u062a\\u062d\\u0645\\u064a\\u0644\\u0020\\u0623\\u062f\\u0627\\u0629\\u0020\\u0627\\u0644\\u0631\\u0641\\u0639\\u060c\\u0020\\u062a\\u062d\\u0642\\u0642\\u0020\\u0645\\u0646\\u0020\\u0627\\u0644\\u0627\\u062a\\u0635\\u0627\\u0644')};document.documentElement.appendChild(s)})()";
-const bm = $('#bookmarklet');
-bm.href = BOOKMARKLET;
-bm.addEventListener('click', e => { e.preventDefault(); toast('اسحب هذا الزر إلى شريط المفضلة — لا تضغطه هنا'); });
-$('#copyBm').onclick = () => copyText(BOOKMARKLET).then(()=>toast('تم نسخ رمز الزر'));
-if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints>1 && /Macintosh/.test(navigator.userAgent))) document.body.classList.add('is-mobile');
-$('#copyBm2').onclick = () => copyText(BOOKMARKLET).then(()=>toast('تم نسخ رمز الزر — الآن أضف الصفحة للمفضلة'));
-const isSetup = () => { try{ return localStorage.getItem('saif_bm_ok')==='1'; }catch(e){ return false; } };
+/* ===== الاتصال بأداة الرفع (Tampermonkey) ===== */
+let toolReady = false;
 function lock(){ document.body.classList.add('locked'); $('#setupModal').classList.add('show'); }
-window.SAIF_UNLOCK = () => {
-  try{ localStorage.setItem('saif_bm_ok','1'); }catch(e){}
-  document.body.classList.remove('locked');
-  $('#setupModal').classList.remove('show');
-};
-bm.addEventListener('dragend', () => { $('#step2').scrollIntoView({block:'nearest'}); });
-if(!isSetup()) lock();
+function unlock(){ document.body.classList.remove('locked'); $('#setupModal').classList.remove('show'); }
+lock();
+const ping = () => window.postMessage({ type:'SAIF_SURVEY_PING' }, '*');
+const pingTimer = setInterval(()=>{ if(toolReady) return clearInterval(pingTimer); ping(); }, 700);
+ping();
 
 /* ===== الحفظ المؤقت ===== */
 function collect(){
@@ -777,25 +431,23 @@ $('#uploadBtn').onclick = () => {
     return toast(`يوجد ${miss.length} بند بدون تقدير`);
   }
   if(!d.suggestion){ $('#suggestion').focus(); return toast('حقل المقترح مطلوب'); }
-  if(!isSetup()) return lock();
+  if(!toolReady) return lock();
   $('#loginModal').classList.add('show'); $('#user').focus();
 };
 
-let lastCode = '';
 $('#goBtn').onclick = () => {
   const user = $('#user').value.trim(), pass = $('#pass').value;
   if(!user || !pass) return toast('أدخل اسم المستخدم وكلمة المرور');
   const d = collect();
-  const payload = { v:2, user, pass, autoSave: $('#autoSave').checked, answers: d.answers, suggestion: PREFIX + d.suggestion };
-  lastCode = 'SAIF1:' + btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  const payload = { user, pass, autoSave: $('#autoSave').checked, showPortal: $('#showPortal').checked,
+                    answers: d.answers, suggestion: PREFIX + d.suggestion };
   $('#pass').value = '';
-  copyText(lastCode);
   $('#loginModal').classList.remove('show');
-  setProg(0, 'بانتظار الضغط على زر «رفع الاستبانة» في البوابة...', '');
+  $('#howto').style.display = '';
+  setProg(1, 'جارٍ إرسال البيانات إلى أداة الرفع...', '');
   $('#progModal').classList.add('show');
-  window.open(PORTAL_URL, 'saif_portal');
+  window.postMessage({ type:'SAIF_SURVEY_UPLOAD', payload }, '*');
 };
-$('#recopy').onclick = () => { if(lastCode) copyText(lastCode).then(()=>toast('تم النسخ')); };
 
 function setProg(p, msg, kind){
   $('#pBar').style.width = p+'%';
@@ -803,10 +455,12 @@ function setProg(p, msg, kind){
   const m = $('#pMsg'); m.textContent = msg; m.className = 'pmsg ' + (kind||'');
 }
 window.addEventListener('message', e=>{
-  const d = e.data; if(!d || d.type!=='SAIF_SURVEY_PROGRESS') return;
-  $('#howto').style.display = 'none';
-  setProg(d.pct, d.msg, d.kind);
-  if(d.kind==='done'){ toast('اكتمل الرفع بنجاح ✔'); lastCode=''; }
+  const d = e.data; if(!d || d.from!=='saif-userscript') return;
+  if(d.type==='SAIF_SURVEY_READY'){ if(!toolReady){ toolReady = true; unlock(); } return; }
+  if(d.type==='SAIF_SURVEY_PROGRESS'){
+    setProg(d.pct, d.msg, d.kind);
+    if(d.kind==='done') toast('اكتمل الرفع بنجاح ✔');
+  }
 });
 
 /* ===== Excel / طباعة / مسح ===== */
