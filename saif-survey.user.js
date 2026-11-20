@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         رافع استبانة آراء المعلمين — سيف المعولي
 // @namespace    saif.almawali.teacher-survey
-// @version      1.0
+// @version      1.1
 // @description  يرفع «استبانة استطلاع آراء أعضاء الهيئة التعليمية في الحياة المدرسية» إلى البوابة التعليمية تلقائيًا في الخلفية. تصميم: سيف جمال المعولي — معولة بن شمس
 // @author       سيف جمال المعولي
 // @match        *://*.moe.gov.om/*
@@ -19,7 +19,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '1.0';
+  const VERSION = '1.1';
   const LOGIN_URL = 'https://moe.gov.om/Portal/Services/UserLoginnew.aspx';
   const K = 'SAIF_SV_STATE', P = 'SAIF_SV_PROG', T = 'SAIF_SV_THEME', O = 'SAIF_SV_OPTS';
   const TOP = window.top === window.self;
@@ -44,17 +44,24 @@
     ['mouseover', 'mousedown', 'mouseup'].forEach(t => el.dispatchEvent(new MouseEvent(t, { bubbles: true, cancelable: true, view: window })));
     el.click();
   }
+  const isClickable = el => !!(el.closest('a,button') || /^(INPUT|BUTTON|A)$/.test(el.tagName) || el.onclick || el.getAttribute('onclick'));
   function findByText(targets, tol) {
     tol = tol == null ? 6 : tol;
-    const els = document.querySelectorAll('a,button,input[type=button],input[type=submit],span,td,li,div,label,font,b,p,h3,h4');
-    let best = null, bestLen = 1e9;
+    const els = document.querySelectorAll('a,button,input[type=button],input[type=submit],input[type=image],img,span,td,li,div,label,font,b,p,h3,h4');
+    let best = null, bestScore = 1e9;
     for (const el of els) {
       if (!visible(el) || el.closest('#saifPanel')) continue;
-      const t = norm(el.tagName === 'INPUT' ? el.value : el.textContent);
-      if (!t || t.length > 120) continue;
-      for (const tg of targets) {
-        const nt = norm(tg);
-        if ((t === nt || (t.includes(nt) && t.length <= nt.length + tol)) && t.length <= bestLen) { best = el; bestLen = t.length; }
+      const own = el.tagName === 'INPUT' ? el.value : (el.tagName === 'IMG' ? '' : el.textContent);
+      const texts = [own, el.getAttribute('title'), el.getAttribute('alt')].map(norm).filter(Boolean);
+      for (const t of texts) {
+        if (t.length > 120) continue;
+        for (const tg of targets) {
+          const nt = norm(tg);
+          if (t === nt || (t.includes(nt) && t.length <= nt.length + tol)) {
+            const score = t.length + (isClickable(el) ? 0 : 1000);   // الأزرار والروابط أولًا
+            if (score <= bestScore) { best = el; bestScore = score; }
+          }
+        }
       }
     }
     if (best) { const a = best.closest('a,button'); if (a && visible(a)) return a; }
@@ -226,7 +233,7 @@
     { name: 'تطوير الأداء المدرسي', t: ['تطوير الأداء المدرسي'] },
     { name: 'استبانات تطوير الأداء', t: ['استبانات تطوير الأداء', 'استبانات تطوير الأداء المدرسي'] },
     { name: 'عرض', t: ['عرض'] },
-    { name: 'إضافة', t: ['إضافة', '+ إضافة', '+إضافة', 'اضافة'] },
+    { name: 'إضافة', t: ['إضافة', 'اضافة', '+ إضافة', '+إضافة', 'إضافة جديد', 'Add'] },
     { name: 'اختيار الاستمارة', form: true }
   ];
   function chooseForm() {
