@@ -54,6 +54,7 @@ body{margin:0;font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;background:var(
 @keyframes pulse{50%{box-shadow:0 0 0 6px rgba(20,137,122,.15)}}
 body.locked .wrap{filter:blur(3px);pointer-events:none;user-select:none}
 #setupModal{z-index:55}
+body.is-ff .cr{display:none} body:not(.is-ff) .ff{display:none}
 
 .section{background:var(--card);border-radius:16px;margin:16px 0;box-shadow:0 3px 14px rgba(0,0,0,.05);overflow:hidden}
 .shead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(90deg,#f6f9fc,#fff);border-bottom:1px solid var(--line)}
@@ -212,7 +213,8 @@ footer b{color:var(--navy)}
       <ol>
         <li>انتقل إلى تبويب البوابة.</li>
         <li>اضغط زر <b>«⬆ رفع الاستبانة»</b> في شريط المفضلة.</li>
-        <li>إذا طلب منك المتصفح السماح باللصق فوافق، أو الصق بـ <b>Ctrl + V</b>.</li>
+        <li class="ff">سيظهر مربع صغير: اضغط <b>Ctrl + V</b> ثم <b>حسنًا</b>.</li>
+        <li class="cr">إذا طلب منك المتصفح السماح باللصق فوافق، أو الصق بـ <b>Ctrl + V</b> ثم «موافق».</li>
       </ol>
       سيتم الدخول والرفع في الخلفية، ويظهر التقدّم هنا وفي البوابة.
     </div>
@@ -239,9 +241,14 @@ footer b{color:var(--navy)}
       <div class="hint">اضغط مطولًا على الزر واسحبه للأعلى</div>
     </div>
     <div class="note" style="text-align:right">
-      لا يظهر شريط المفضلة؟ اضغط <b>Ctrl + Shift + B</b> وسيظهر فورًا.
+      <div class="ff">
+        <b>فايرفوكس:</b> لإظهار شريط العلامات بشكل دائم: انقر بالزر الأيمن في المساحة الفارغة أعلى المتصفح ← <b>شريط العلامات</b> ← <b>دائمًا</b>
+        (أو اضغط <b>Ctrl + Shift + B</b>).
+      </div>
+      <div class="cr">لا يظهر شريط المفضلة؟ اضغط <b>Ctrl + Shift + B</b> وسيظهر فورًا.</div>
       <details style="margin-top:6px"><summary style="cursor:pointer;color:var(--navy)">طريقة بديلة (بدون سحب)</summary>
-        انقر بالزر الأيمن على شريط المفضلة ← «إضافة صفحة» ← الاسم: <b>رفع الاستبانة</b> ← الصق في خانة العنوان (Ctrl+V) بعد الضغط على:
+        <span class="ff">انقر بالزر الأيمن على شريط العلامات ← <b>أضِف علامة...</b> ← الاسم: <b>رفع الاستبانة</b> ← وفي خانة <b>العنوان (URL)</b> الصق (Ctrl+V) بعد الضغط على:</span>
+        <span class="cr">انقر بالزر الأيمن على شريط المفضلة ← «إضافة صفحة» ← الاسم: <b>رفع الاستبانة</b> ← الصق في خانة العنوان (Ctrl+V) بعد الضغط على:</span>
         <button class="btn ghost" style="padding:4px 10px;font-size:12px" id="copyBm">نسخ رمز الزر</button>
       </details>
     </div>
@@ -420,8 +427,8 @@ function SAIF_UPLOADER() {
   /* ---------- البيانات ---------- */
   async function getData() {
     var code = '';
-    try { code = await navigator.clipboard.readText(); } catch (e) {}
-    if (!/^SAIF1:/.test((code || '').trim())) code = prompt('الصق بيانات الاستبانة المنسوخة من صفحة الاستبانة (Ctrl + V):') || '';
+    if (!/firefox/i.test(navigator.userAgent)) { try { code = await navigator.clipboard.readText(); } catch (e) {} }
+    if (!/^SAIF1:/.test((code || '').trim())) code = prompt('اضغط Ctrl + V للصق بيانات الاستبانة، ثم اضغط «حسنًا»:') || '';
     code = code.trim();
     if (code.indexOf('SAIF1:') !== 0) return null;
     try { return JSON.parse(decodeURIComponent(escape(atob(code.slice(6))))); } catch (e) { return null; }
@@ -651,11 +658,16 @@ $('#suggestion').maxLength = MAXLEN;
 $('#today').textContent = new Date().toLocaleDateString('ar-OM',{year:'numeric',month:'long',day:'numeric'});
 
 /* زر المفضلة */
-const BOOKMARKLET = 'javascript:' + encodeURIComponent('(' + SAIF_UPLOADER.toString() + ')();void 0;');
+/* زر قصير يحمّل أداة الرفع من نفس موقع الاستبانة (uploader.js) — ويتحدث تلقائيًا */
+const UPLOADER_URL = new URL('uploader.js', location.href).href;
+const BOOKMARKLET = location.protocol === 'file:'
+  ? 'javascript:' + encodeURIComponent('(' + SAIF_UPLOADER.toString() + ')();void 0;')
+  : "javascript:(function(){if(window.SAIF_UNLOCK){SAIF_UNLOCK();return}var s=document.createElement('script');s.charset='utf-8';s.src='" + UPLOADER_URL + "?v='+Date.now();s.onerror=function(){alert('تعذر تحميل أداة الرفع، تحقق من الاتصال')};document.documentElement.appendChild(s)})();void 0;";
 const bm = $('#bookmarklet');
 bm.href = BOOKMARKLET;
 bm.addEventListener('click', e => { e.preventDefault(); toast('اسحب هذا الزر إلى شريط المفضلة — لا تضغطه هنا'); });
 $('#copyBm').onclick = () => copyText(BOOKMARKLET).then(()=>toast('تم نسخ رمز الزر'));
+if(/firefox/i.test(navigator.userAgent)) document.body.classList.add('is-ff');
 const isSetup = () => { try{ return localStorage.getItem('saif_bm_ok')==='1'; }catch(e){ return false; } };
 function lock(){ document.body.classList.add('locked'); $('#setupModal').classList.add('show'); }
 window.SAIF_UNLOCK = () => {
