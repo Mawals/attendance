@@ -212,8 +212,6 @@ body.is-mobile .desk{display:none}
 
   <div class="actions">
     <button class="btn primary" id="uploadBtn">⬆ رفع إلى البوابة</button>
-    <button class="btn ghost" id="excelBtn">⬇ تصدير Excel</button>
-    <button class="btn ghost" id="printBtn">🖨 طباعة</button>
     <button class="btn ghost" id="clearBtn">↺ مسح الإجابات</button>
   </div>
 
@@ -223,29 +221,16 @@ body.is-mobile .desk{display:none}
   </footer>
 </div>
 
-<!-- نافذة الدخول -->
-<div class="modal" id="loginModal">
-  <div class="box">
-    <h3>بيانات الدخول إلى البوابة التعليمية</h3>
-    <p class="sub">تُستخدم فقط لتسجيل الدخول في البوابة، ولا تُحفظ في هذه الصفحة.</p>
-    <div class="field"><label>اسم المستخدم</label><input id="user" autocomplete="username"></div>
-    <div class="field"><label>كلمة المرور</label><input id="pass" type="password" autocomplete="current-password"></div>
-    <label class="chk"><input type="checkbox" id="autoSave" checked> حفظ الاستمارة تلقائيًا بعد التعبئة</label>
-    <label class="chk" style="margin-top:-8px"><input type="checkbox" id="showPortal"> عرض البوابة أثناء الرفع (بدلًا من الخلفية)</label>
-    <div class="row">
-      <button class="btn primary" id="goBtn">دخول ورفع</button>
-      <button class="btn ghost" data-close>إلغاء</button>
-    </div>
-  </div>
-</div>
-
 <!-- نافذة التقدم -->
 <div class="modal" id="progModal">
   <div class="box">
     <h3>رفع الاستبانة إلى البوابة</h3>
     <div class="note" id="howto">
-      ✔ تم إرسال بياناتك إلى أداة الرفع، وتُفتح البوابة الآن في الخلفية.
-      <br>يمكنك متابعة التقدّم هنا. إذا طلبت البوابة رمز تحقق أو توقفت عند خطوة، افتح تبويب البوابة وأكمل الخطوة وسيتابع الرفع تلقائيًا.
+      ✔ تم إرسال إجاباتك إلى أداة الرفع، وفُتحت صفحة دخول البوابة.
+      <ol>
+        <li>سجّل الدخول في البوابة باسم المستخدم وكلمة المرور.</li>
+        <li>بعد الدخول تبدأ الأداة الرفع تلقائيًا، ويظهر التقدّم هنا وفي البوابة.</li>
+      </ol>
     </div>
     <div class="pbar"><i id="pBar"></i></div>
     <div class="pct" id="pPct">0%</div>
@@ -432,19 +417,9 @@ $('#uploadBtn').onclick = () => {
   }
   if(!d.suggestion){ $('#suggestion').focus(); return toast('حقل المقترح مطلوب'); }
   if(!toolReady) return lock();
-  $('#loginModal').classList.add('show'); $('#user').focus();
-};
-
-$('#goBtn').onclick = () => {
-  const user = $('#user').value.trim(), pass = $('#pass').value;
-  if(!user || !pass) return toast('أدخل اسم المستخدم وكلمة المرور');
-  const d = collect();
-  const payload = { user, pass, autoSave: $('#autoSave').checked, showPortal: $('#showPortal').checked,
-                    answers: d.answers, suggestion: PREFIX + d.suggestion };
-  $('#pass').value = '';
-  $('#loginModal').classList.remove('show');
+  const payload = { showPortal: true, answers: d.answers, suggestion: PREFIX + d.suggestion };
   $('#howto').style.display = '';
-  setProg(1, 'جارٍ إرسال البيانات إلى أداة الرفع...', '');
+  setProg(1, 'بانتظار تسجيل الدخول في البوابة...', '');
   $('#progModal').classList.add('show');
   window.postMessage({ type:'SAIF_SURVEY_UPLOAD', payload }, '*');
 };
@@ -463,20 +438,7 @@ window.addEventListener('message', e=>{
   }
 });
 
-/* ===== Excel / طباعة / مسح ===== */
-$('#excelBtn').onclick = () => {
-  const d = collect(); const L = v => { const l=LEVELS.find(x=>x.v===v); return l?`${l.v} - ${l.t}`:''; };
-  let rows = d.answers.map(a=>`<tr><td>${a.n}</td><td>${a.text}</td><td>${L(a.level)}</td></tr>`).join('');
-  rows += `<tr><td></td><td><b>المقترح</b></td><td>${d.suggestion.replace(/</g,'&lt;')}</td></tr>`;
-  const html = `<html dir="rtl"><head><meta charset="utf-8"></head><body>
-    <table border="1"><tr><th colspan="3">وزارة التعليم - المديرية العامة للتعليم بمحافظة جنوب الباطنة</th></tr>
-    <tr><th colspan="3">استبانة استطلاع آراء أعضاء الهيئة التعليمية في الحياة المدرسية</th></tr>
-    <tr><th>م</th><th>البند</th><th>التقدير</th></tr>${rows}</table></body></html>`;
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['﻿'+html],{type:'application/vnd.ms-excel'}));
-  a.download = 'استبانة_آراء_المعلمين.xls'; a.click();
-};
-$('#printBtn').onclick = () => window.print();
+/* ===== مسح ===== */
 $('#clearBtn').onclick = () => {
   if(!confirm('مسح جميع الإجابات؟')) return;
   document.querySelectorAll('.opts input').forEach(i=>i.checked=false);

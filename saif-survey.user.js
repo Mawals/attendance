@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         رافع استبانة آراء المعلمين — سيف المعولي
 // @namespace    saif.almawali.teacher-survey
-// @version      1.1
+// @version      1.2
 // @description  يرفع «استبانة استطلاع آراء أعضاء الهيئة التعليمية في الحياة المدرسية» إلى البوابة التعليمية تلقائيًا في الخلفية. تصميم: سيف جمال المعولي — معولة بن شمس
 // @author       سيف جمال المعولي
 // @match        *://*.moe.gov.om/*
@@ -19,7 +19,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '1.1';
+  const VERSION = '1.2';
   const LOGIN_URL = 'https://moe.gov.om/Portal/Services/UserLoginnew.aspx';
   const K = 'SAIF_SV_STATE', P = 'SAIF_SV_PROG', T = 'SAIF_SV_THEME', O = 'SAIF_SV_OPTS';
   const TOP = window.top === window.self;
@@ -88,8 +88,8 @@
         const p = d.payload;
         setS({ active: true, phase: 'login', step: 0, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false,
                data: { user: p.user, pass: p.pass, answers: p.answers, suggestion: p.suggestion } });
-        GM_setValue(O, Object.assign(opts(), { autoSave: !!p.autoSave }));
-        prog(2, 'تم استلام البيانات — جارٍ فتح البوابة...');
+        if ('autoSave' in p) GM_setValue(O, Object.assign(opts(), { autoSave: !!p.autoSave }));
+        prog(2, 'تم استلام الإجابات — سجّل الدخول في البوابة وسيبدأ الرفع تلقائيًا', 'user');
         GM_openInTab(LOGIN_URL, { active: !!p.showPortal, insert: true, setParent: true });
       }
     });
@@ -336,7 +336,11 @@
     // 1) تسجيل الدخول
     const pw = findPassword(document);
     if (pw && s.phase === 'login') {
-      if (!s.data.pass) { prog(5, 'سجّل الدخول بنفسك وسيكمل الرفع تلقائيًا', 'user'); return; }
+      if (!s.data.pass) {
+        const cur = GM_getValue(P, {});
+        if (TOP && cur.pct !== 3) prog(3, 'سجّل الدخول في البوابة — سيبدأ الرفع تلقائيًا بعد الدخول', 'user');
+        return;
+      }
       if (s.loginTs && Date.now() - s.loginTs < 15000) return;
       const ins = [...document.querySelectorAll('input')].filter(i => visible(i) && /^(text|email|tel|number|)$/i.test(i.getAttribute('type') || 'text'));
       const before = ins.filter(i => i.compareDocumentPosition(pw) & Node.DOCUMENT_POSITION_FOLLOWING);
