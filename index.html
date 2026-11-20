@@ -54,7 +54,14 @@ body{margin:0;font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;background:var(
 @keyframes pulse{50%{box-shadow:0 0 0 6px rgba(20,137,122,.15)}}
 body.locked .wrap{filter:blur(3px);pointer-events:none;user-select:none}
 #setupModal{z-index:55}
-body.is-ff .cr{display:none} body:not(.is-ff) .ff{display:none}
+.stp{display:flex;gap:10px;align-items:center;background:#f6f9fc;border-radius:12px;padding:10px 12px;margin:8px 0;font-size:15px}
+.stp .sn{flex:none;width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800}
+.stp.last{background:#e9f7f1;border:1.5px solid var(--teal);animation:pulse 1.6s infinite}
+.stp.last .sn{background:var(--teal)}
+.dropzone{text-align:center}
+.alt{margin-top:14px;font-size:13px;border-top:1px dashed var(--line);padding-top:10px}
+.alt summary{cursor:pointer;color:var(--navy);font-weight:700}
+.alt ol{margin:8px 0 0;padding-right:20px;line-height:2.1}
 
 .section{background:var(--card);border-radius:16px;margin:16px 0;box-shadow:0 3px 14px rgba(0,0,0,.05);overflow:hidden}
 .shead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(90deg,#f6f9fc,#fff);border-bottom:1px solid var(--line)}
@@ -126,7 +133,33 @@ footer b{color:var(--navy)}
 
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:12px;display:none;z-index:60}
 
-@media(max-width:640px){.hgrid{grid-template-columns:1fr}.hleft{text-align:right}.seal{display:none}.shead{flex-direction:column;align-items:flex-start}}
+.mob{display:none}
+body.is-mobile .mob{display:block} body.is-mobile li.mob{display:list-item} body.is-mobile span.mob{display:inline}
+body.is-mobile .desk{display:none}
+.modal .box{max-height:92vh;overflow-y:auto}
+@media(max-width:640px){
+  .wrap{padding:10px}
+  .header{padding:16px;border-radius:14px}
+  .hgrid{grid-template-columns:1fr;gap:4px}.hright{font-size:13px;line-height:1.7}.hright div:first-child{font-size:14px}
+  .hleft{display:none}.seal{display:none}
+  .title h1{font-size:17px}.title p{font-size:12.5px}
+  .sticky{margin-top:8px;padding:6px 0}.stat{padding:8px 12px;gap:10px;font-size:13px}
+  .legend span{font-size:11.5px;padding:3px 9px}
+  .shead{flex-direction:column;align-items:flex-start;padding:12px}
+  .shead h2{font-size:15px}
+  .fillall button{padding:4px 7px;font-size:11.5px}
+  .item{grid-template-columns:26px 1fr;gap:8px;padding:12px}
+  .item .n{width:26px;height:26px;font-size:12px}
+  .q{font-size:14.5px}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .opts label:last-child{grid-column:1/-1}
+  .opts span{display:block;text-align:center;padding:9px 6px;font-size:13.5px}
+  .sug{padding:12px}
+  .actions{gap:8px}.actions .btn{flex:1 1 45%;justify-content:center;padding:12px 10px;font-size:14px}
+  .actions .btn.primary{flex-basis:100%;font-size:16px}
+  .modal{padding:10px}.box{padding:18px}
+  .stp{font-size:14px;align-items:flex-start}
+}
 @media print{.sticky,.actions,.fillall,.setup{display:none}body{background:#fff}.section{box-shadow:none;border:1px solid #ccc}}
 </style>
 </head>
@@ -212,9 +245,9 @@ footer b{color:var(--navy)}
       ✔ تم تجهيز بياناتك ونسخها، وفُتحت البوابة في تبويب جديد.
       <ol>
         <li>انتقل إلى تبويب البوابة.</li>
-        <li>اضغط زر <b>«⬆ رفع الاستبانة»</b> في شريط المفضلة.</li>
-        <li class="ff">سيظهر مربع صغير: اضغط <b>Ctrl + V</b> ثم <b>حسنًا</b>.</li>
-        <li class="cr">إذا طلب منك المتصفح السماح باللصق فوافق، أو الصق بـ <b>Ctrl + V</b> ثم «موافق».</li>
+        <li class="desk">اضغط زر <b>«⬆ رفع الاستبانة»</b> في شريط المفضلة.</li>
+        <li class="mob">شغّل زر <b>«رفع الاستبانة»</b> من المفضلة (في أندرويد: اكتب اسمه في شريط العنوان واختره).</li>
+        <li>إذا ظهر مربع لصق البيانات: الصق (<span class="desk">Ctrl + V</span><span class="mob">ضغطة مطولة ← لصق</span>) ثم «موافق».</li>
       </ol>
       سيتم الدخول والرفع في الخلفية، ويظهر التقدّم هنا وفي البوابة.
     </div>
@@ -230,30 +263,45 @@ footer b{color:var(--navy)}
 
 <!-- نافذة إضافة الزر -->
 <div class="modal" id="setupModal">
-  <div class="box" style="max-width:520px;text-align:center">
-    <div class="lockicon">🔒</div>
-    <h3>الاستبانة مقفلة حتى إضافة زر الرفع</h3>
-    <p class="sub">اسحب الزر الأزرق وأفلته في شريط المفضلة أعلى المتصفح (مرة واحدة فقط)</p>
+  <div class="box" style="max-width:540px">
+    <div style="text-align:center">
+      <div class="lockicon">🔒</div>
+      <h3>الاستبانة مقفلة حتى إضافة زر الرفع</h3>
+      <p class="sub">ثلاث خطوات بسيطة — مرة واحدة فقط</p>
+    </div>
+    <div class="desk">
+
+    <div class="stp"><span class="sn">1</span><div>لإظهار شريط المفضلة اضغط <b>Ctrl + Shift + B</b></div></div>
+
+    <div class="stp"><span class="sn">2</span><div>اسحب زر <b>«رفع الاستبانة»</b> وأفلته في شريط المفضلة</div></div>
     <div class="dropzone">
       <div class="bar-mock"><span>★</span><span class="slot">أفلت الزر هنا</span></div>
       <div class="arrow">⬆</div>
       <a class="bm big" id="bookmarklet" href="#" draggable="true">⬆ رفع الاستبانة</a>
-      <div class="hint">اضغط مطولًا على الزر واسحبه للأعلى</div>
     </div>
-    <div class="note" style="text-align:right">
-      <div class="ff">
-        <b>فايرفوكس:</b> لإظهار شريط العلامات بشكل دائم: انقر بالزر الأيمن في المساحة الفارغة أعلى المتصفح ← <b>شريط العلامات</b> ← <b>دائمًا</b>
-        (أو اضغط <b>Ctrl + Shift + B</b>).
-      </div>
-      <div class="cr">لا يظهر شريط المفضلة؟ اضغط <b>Ctrl + Shift + B</b> وسيظهر فورًا.</div>
-      <details style="margin-top:6px"><summary style="cursor:pointer;color:var(--navy)">طريقة بديلة (بدون سحب)</summary>
-        <span class="ff">انقر بالزر الأيمن على شريط العلامات ← <b>أضِف علامة...</b> ← الاسم: <b>رفع الاستبانة</b> ← وفي خانة <b>العنوان (URL)</b> الصق (Ctrl+V) بعد الضغط على:</span>
-        <span class="cr">انقر بالزر الأيمن على شريط المفضلة ← «إضافة صفحة» ← الاسم: <b>رفع الاستبانة</b> ← الصق في خانة العنوان (Ctrl+V) بعد الضغط على:</span>
-        <button class="btn ghost" style="padding:4px 10px;font-size:12px" id="copyBm">نسخ رمز الزر</button>
-      </details>
+
+    <div class="stp last" id="step2"><span class="sn">3</span><div>اضغط <b>«رفع الاستبانة»</b> في شريط المفضلة لفتح الاستبانة 🔓</div></div>
+
+    <details class="alt"><summary>طريقة بديلة بدون سحب</summary>
+      <ol>
+        <li>اضغط <button class="btn ghost" style="padding:3px 10px;font-size:12px" id="copyBm">نسخ رمز الزر</button></li>
+        <li>انقر بالزر الأيمن على شريط المفضلة ← اختر <b>إضافة صفحة / إضافة علامة</b>.</li>
+        <li>في خانة الاسم اكتب: <b>رفع الاستبانة</b></li>
+        <li>في خانة العنوان (URL) الصق الرمز بـ <b>Ctrl + V</b> ثم احفظ.</li>
+        <li>اضغط «رفع الاستبانة» في شريط المفضلة لفتح الاستبانة.</li>
+      </ol>
+    </details>
     </div>
-    <div class="step2" id="step2">
-      <b>الخطوة الأخيرة:</b> اضغط الآن الزر <b>«⬆ رفع الاستبانة»</b> الذي أضفته في شريط المفضلة لفتح الاستبانة 🔓
+
+    <div class="mob">
+      <div class="stp"><span class="sn">1</span><div>اضغط: <button class="btn primary" style="padding:6px 14px;font-size:14px" id="copyBm2">نسخ رمز الزر</button></div></div>
+      <div class="stp"><span class="sn">2</span><div>أضف هذه الصفحة إلى المفضلة (⭐ أو ⋮ ثم ⭐)، ثم افتح <b>تعديل العلامة</b>:
+        <br>• الاسم: <b>رفع الاستبانة</b>
+        <br>• العنوان (URL): احذف الموجود والصق الرمز</div></div>
+      <div class="stp last" id="step2m"><span class="sn">3</span><div>لفتح الاستبانة:
+        <br>• <b>أندرويد (Chrome / Edge):</b> اكتب «رفع الاستبانة» في شريط العنوان واختر العلامة ⭐ من القائمة.
+        <br>• <b>آيفون (Safari):</b> افتح العلامات 📖 واضغط «رفع الاستبانة».</div></div>
+      <div class="note" style="margin-top:10px">ملاحظة: متصفح فايرفوكس على الهاتف لا يدعم هذه الأزرار — استخدم Chrome أو Edge أو Safari، أو استخدم الحاسوب.</div>
     </div>
   </div>
 </div>
@@ -667,14 +715,14 @@ const bm = $('#bookmarklet');
 bm.href = BOOKMARKLET;
 bm.addEventListener('click', e => { e.preventDefault(); toast('اسحب هذا الزر إلى شريط المفضلة — لا تضغطه هنا'); });
 $('#copyBm').onclick = () => copyText(BOOKMARKLET).then(()=>toast('تم نسخ رمز الزر'));
-if(/firefox/i.test(navigator.userAgent)) document.body.classList.add('is-ff');
+if(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints>1 && /Macintosh/.test(navigator.userAgent))) document.body.classList.add('is-mobile');
+$('#copyBm2').onclick = () => copyText(BOOKMARKLET).then(()=>toast('تم نسخ رمز الزر — الآن أضف الصفحة للمفضلة'));
 const isSetup = () => { try{ return localStorage.getItem('saif_bm_ok')==='1'; }catch(e){ return false; } };
 function lock(){ document.body.classList.add('locked'); $('#setupModal').classList.add('show'); }
 window.SAIF_UNLOCK = () => {
   try{ localStorage.setItem('saif_bm_ok','1'); }catch(e){}
   document.body.classList.remove('locked');
   $('#setupModal').classList.remove('show');
-  toast('🔓 تم فتح الاستبانة — زر الرفع جاهز');
 };
 bm.addEventListener('dragend', () => { $('#step2').scrollIntoView({block:'nearest'}); });
 if(!isSetup()) lock();
