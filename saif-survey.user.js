@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         رافع استبانة آراء المعلمين — سيف المعولي
 // @namespace    saif.almawali.teacher-survey
-// @version      1.3
+// @version      1.5
 // @description  يرفع «استبانة استطلاع آراء أعضاء الهيئة التعليمية في الحياة المدرسية» إلى البوابة التعليمية تلقائيًا في الخلفية. تصميم: سيف جمال المعولي — معولة بن شمس
 // @author       سيف جمال المعولي
 // @match        *://*.moe.gov.om/*
@@ -12,6 +12,7 @@
 // @grant        GM_deleteValue
 // @grant        GM_addValueChangeListener
 // @grant        GM_openInTab
+// @grant        GM_setClipboard
 // @grant        unsafeWindow
 // @run-at       document-end
 // ==/UserScript==
@@ -19,7 +20,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '1.3';
+  const VERSION = '1.5';
   const LOGIN_URL = 'https://moe.gov.om/portal/Services/UserLoginnew.aspx';
   const Q_URL = 'https://moe.gov.om/SMS/Questionaires/QuestionaireMain.aspx';
   const FORM_KEY = 'استطلاع آراء أعضاء الهيئة التعليمية';
@@ -37,7 +38,9 @@
   const getS = () => GM_getValue(K, null);
   const setS = s => GM_setValue(K, s);
   const patch = o => { const s = getS(); if (!s) return null; Object.assign(s, o); setS(s); return s; };
-  const prog = (pct, msg, kind) => GM_setValue(P, { pct, msg, kind: kind || 'info', t: Date.now() });
+  const UI_STEPS = ['تسجيل الدخول في البوابة', 'فتح «استبانات تطوير الأداء»', 'الضغط على «عرض»', 'الضغط على «اضافة»', 'اختيار استمارة أعضاء الهيئة التعليمية', 'تعبئة البنود', 'كتابة المقترح', 'الحفظ'];
+  let curSt = 0;
+  const prog = (pct, msg, kind, st) => { if (st != null) curSt = st; else { const o = GM_getValue(P, null); curSt = o && o.st != null ? o.st : curSt; } if (pct == null) { const o = GM_getValue(P, null); pct = o ? o.pct : 0; } GM_setValue(P, { pct, msg, kind: kind || 'info', st: curSt, t: Date.now() }); };
   const opts = () => Object.assign({ autoSave: true, wait: 25 }, GM_getValue(O, {}));
   const visible = el => !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
   function fire(el) { ['input', 'change'].forEach(t => el.dispatchEvent(new Event(t, { bubbles: true }))); }
@@ -49,12 +52,12 @@
   const isClickable = el => !!(el.closest('a,button') || /^(INPUT|BUTTON|A)$/.test(el.tagName) || el.onclick || el.getAttribute('onclick'));
   function findByText(targets, tol) {
     tol = tol == null ? 6 : tol;
-    const els = document.querySelectorAll('a,button,input[type=button],input[type=submit],input[type=image],img,span,td,li,div,label,font,b,p,h3,h4');
+    const els = document.querySelectorAll('a,button,input,img,[onclick],[role=button],span,td,li,div,label,font,b,p,h3,h4');
     let best = null, bestScore = 1e9;
     for (const el of els) {
       if (!visible(el) || el.closest('#saifPanel')) continue;
       const own = el.tagName === 'INPUT' ? el.value : (el.tagName === 'IMG' ? '' : el.textContent);
-      const texts = [own, el.getAttribute('title'), el.getAttribute('alt')].map(norm).filter(Boolean);
+      const texts = [own, el.getAttribute('title'), el.getAttribute('alt'), el.getAttribute('aria-label'), el.getAttribute('value')].map(norm).filter(Boolean);
       for (const t of texts) {
         if (t.length > 120) continue;
         for (const tg of targets) {
@@ -68,6 +71,26 @@
     }
     if (best) { const a = best.closest('a,button'); if (a && visible(a)) return a; }
     return best;
+  }
+  async function flash(el, label, quick) {
+    try {
+      const d = el.ownerDocument, w = d.defaultView;
+      if (!d.getElementById('saifHlCss')) {
+        const st = d.createElement('style'); st.id = 'saifHlCss';
+        st.textContent = '.saif-hl{outline:3px solid #e6b93a!important;outline-offset:3px!important;box-shadow:0 0 0 8px rgba(230,185,58,.35)!important;border-radius:6px}' +
+          '.saif-tip{position:absolute;z-index:2147483646;background:linear-gradient(135deg,#e6b93a,#c9971c);color:#fff;font:bold 13px Tahoma,sans-serif;padding:5px 12px;border-radius:12px;direction:rtl;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.3);white-space:nowrap}';
+        (d.head || d.documentElement).appendChild(st);
+      }
+      try { el.scrollIntoView({ block: 'center' }); } catch (e) {}
+      el.classList.add('saif-hl');
+      if (quick) { await sleep(110); el.classList.remove('saif-hl'); return; }
+      const r = el.getBoundingClientRect(), tip = d.createElement('div');
+      tip.className = 'saif-tip'; tip.textContent = '👆 الخطوة: ' + label;
+      tip.style.left = Math.max(4, r.left + w.scrollX) + 'px'; tip.style.top = Math.max(4, r.top + w.scrollY - 34) + 'px';
+      d.body.appendChild(tip);
+      await sleep(1000);
+      setTimeout(() => { el.classList.remove('saif-hl'); tip.remove(); }, 1400);
+    } catch (e) {}
   }
   function allDocs(win, out) {
     out = out || [];
@@ -93,11 +116,11 @@
         setS({ active: true, phase: 'login', step: 0, directTried: false, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false,
                data: { user: p.user, pass: p.pass, answers: p.answers, suggestion: p.suggestion } });
         if ('autoSave' in p) GM_setValue(O, Object.assign(opts(), { autoSave: !!p.autoSave }));
-        prog(2, 'تم استلام الإجابات — سجّل الدخول في البوابة وسيبدأ الرفع تلقائيًا', 'user');
+        prog(2, 'تم استلام الإجابات — سجّل الدخول في البوابة وسيبدأ الرفع تلقائيًا', 'user', 0);
         GM_openInTab(LOGIN_URL, { active: !!p.showPortal, insert: true, setParent: true });
       }
     });
-    GM_addValueChangeListener(P, (k, o, n) => { if (n) send({ type: 'SAIF_SURVEY_PROGRESS', pct: n.pct, msg: n.msg, kind: n.kind }); });
+    GM_addValueChangeListener(P, (k, o, n) => { if (n) send({ type: 'SAIF_SURVEY_PROGRESS', pct: n.pct, msg: n.msg, kind: n.kind, st: n.st }); });
     return;
   }
 
@@ -138,6 +161,14 @@
 #saifPanel .row{display:flex;justify-content:space-between;align-items:center}
 #saifPanel .row input{width:64px;padding:4px 6px;border:1px solid var(--a2);border-radius:9px;text-align:center}
 #saifPanel .stop{border:1px solid #f0a8a8;border-radius:14px;padding:11px;background:#fde3e3;color:#b42318;font-weight:bold;cursor:pointer}
+#saifPanel .steps{list-style:none;margin:0;padding:8px 10px;background:#fff;border:1px solid var(--bg2);border-radius:14px;display:flex;flex-direction:column;gap:3px}
+#saifPanel .steps li{display:flex;align-items:center;gap:8px;padding:3px 6px;border-radius:9px;color:#9a8a66;font-size:12.5px}
+#saifPanel .steps li i{font-style:normal;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;background:#f3ecd7;flex:none}
+#saifPanel .steps li.ok{color:#127a55}#saifPanel .steps li.ok i{background:#22b07d;color:#fff}
+#saifPanel .steps li.cur{color:var(--dk);font-weight:bold;background:var(--bg)}#saifPanel .steps li.cur i{background:var(--a);color:#fff;animation:saifp 1.2s infinite}
+#saifPanel .steps li.warn{color:#8a5a00;font-weight:bold;background:#fff4d6}#saifPanel .steps li.warn i{background:#e0a100;color:#fff}
+@keyframes saifp{50%{box-shadow:0 0 0 5px rgba(230,185,58,.35)}}
+#saifPanel .scan{border:1.5px dashed var(--a2);border-radius:14px;padding:9px;background:transparent;color:var(--dk);cursor:pointer;font-weight:bold}
 #saifPanel .bar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden}
 #saifPanel .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--a2),var(--a));transition:width .35s}
 #saifPanel .pc{display:flex;justify-content:space-between;font-size:12px;color:var(--dk);font-weight:bold}
@@ -160,6 +191,7 @@
       </div>
       <div class="body">
         <div class="info">بيانات الاستبانة: <span class="dt">—</span></div>
+        <ol class="steps">${UI_STEPS.map(t => `<li><i>○</i><span>${t}</span></li>`).join('')}</ol>
         <button class="go">▶ ابدأ الرفع إلى البوابة</button>
         <div class="card">
           <label><input type="radio" name="saifMode" value="save"> تعبئة وحفظ تلقائي</label>
@@ -168,6 +200,7 @@
           <div class="row"><span>⏱ انتظار استجابة البوابة (ثانية)</span><input type="number" class="wt" min="5" max="120"></div>
         </div>
         <button class="stop">■ إيقاف</button>
+        <button class="scan">🔍 فحص عناصر الصفحة (للدعم الفني)</button>
         <div><div class="pc"><span class="pm">التقدّم</span><span class="pp">0%</span></div><div class="bar"><i></i></div></div>
         <div class="st">جاهز.</div>
       </div>
@@ -205,6 +238,23 @@
       setS(Object.assign(s, { active: true, phase: findPassword(document) ? 'login' : 'nav', step: 0, directTried: false, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false }));
       prog(4, 'بدأ الرفع...');
     };
+    panel.querySelector('.scan').onclick = () => {
+      const out = ['URL: ' + location.href, 'Version: ' + VERSION, 'State: ' + JSON.stringify(Object.assign({}, getS() || {}, { data: undefined }))];
+      allDocs(window).forEach((d, fi) => {
+        out.push('--- FRAME ' + fi + ': ' + (d.location ? d.location.pathname : ''));
+        d.querySelectorAll('input,button,a,img,select,textarea,[onclick]').forEach(x => {
+          if (x.closest('#saifPanel')) return;
+          if (x.tagName === 'A' && !x.getAttribute('onclick') && !x.querySelector('img') && !(x.textContent || '').trim()) return;
+          const at = n => x.getAttribute(n) ? ` ${n}="${String(x.getAttribute(n)).slice(0, 80)}"` : '';
+          let line = `<${x.tagName.toLowerCase()}${at('type')}${at('id')}${at('name')}${at('value')}${at('title')}${at('alt')}${at('src')}${at('href')}${at('onclick')}> ${(x.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 50)}${visible(x) ? '' : ' [مخفي]'}`;
+          if (x.tagName === 'SELECT') line += ' OPTIONS: ' + [...x.options].slice(0, 8).map(o => o.text.trim()).join(' | ');
+          out.push(line);
+        });
+      });
+      const txt = out.join('\n');
+      try { GM_setClipboard(txt); } catch (e) {}
+      prog((GM_getValue(P, {}) || {}).pct || 0, 'تم نسخ تقرير الصفحة ✔ — الصقه وأرسله للدعم الفني', 'user');
+    };
     panel.querySelector('.stop').onclick = () => { patch({ active: false, phase: 'stopped' }); prog(0, 'تم الإيقاف.', 'error'); };
     GM_addValueChangeListener(P, render);
     GM_addValueChangeListener(K, render);
@@ -218,6 +268,15 @@
     panel.querySelector('.bd').classList.toggle('off', !(s && s.active));
     if (s && s.active) panel.classList.remove('min');
     panel.querySelector('.go').disabled = !has || !!(s && s.active);
+    const lis = panel.querySelectorAll('.steps li');
+    const live = p && s && (s.active || Date.now() - p.t < 10 * 60000);
+    const stI = live && p.st != null ? p.st : -1;
+    lis.forEach((li, i) => {
+      let c = '', ic = '○';
+      if (live && (p.kind === 'done' && p.pct >= 100 ? true : i < stI)) { c = 'ok'; ic = '✔'; }
+      else if (live && i === stI) { c = p.kind === 'user' || p.kind === 'error' ? 'warn' : 'cur'; ic = c === 'warn' ? '!' : '▶'; }
+      li.className = c; li.querySelector('i').textContent = ic;
+    });
     const st = panel.querySelector('.st');
     if (p && (s && (s.active || Date.now() - p.t < 10 * 60000))) {
       panel.querySelector('.bar i').style.width = p.pct + '%';
@@ -237,8 +296,8 @@
     { name: 'أعمالي', t: ['أعمالي'] },
     { name: 'تطوير الأداء المدرسي', t: ['تطوير الأداء المدرسي'] },
     { name: 'استبانات تطوير الأداء', t: ['استبانات تطوير الأداء', 'استبانات تطوير الأداء المدرسي'] },
-    { name: 'عرض', t: ['عرض'] },
-    { name: 'إضافة', t: ['إضافة', 'اضافة', '+ إضافة', '+إضافة', 'إضافة جديد', 'Add'] },
+    { name: 'عرض', t: ['عرض', 'استعراض'], re: /btn_?show|show_?btn|btn_?view|view_?btn|btn_?display|display_?btn|btn_?ard|ard_?btn|3ard/i },
+    { name: 'إضافة', t: ['إضافة', 'اضافة', '+ إضافة', '+إضافة', 'إضافة جديد', 'Add'], re: /btn_?add|add_?btn|img_?add|add_?img|ib_?add|lnk_?add|add_?new|addnew|insert|edafa/i },
     { name: 'اختيار الاستمارة', form: true }
   ];
   function chooseForm() {
@@ -284,13 +343,13 @@
   async function fillForm(s) {
     const sels = formSelects(), total = sels.length;
     let um = 0;
-    prog(28, `تم فتح الاستمارة — ${total} بندًا`);
+    prog(28, `تم فتح الاستمارة — ${total} بندًا`, 'info', 5);
     for (let i = 0; i < total; i++) {
       const cur = getS(); if (!cur || !cur.active) return;
       const m = bestItem(rowLabel(sels[i]), s.data.answers);
       const o = m && pickOpt(sels[i], m.level);
-      if (o) { if (sels[i].value !== o.value) { sels[i].value = o.value; fire(sels[i]); } } else um++;
-      prog(28 + Math.round(((i + 1) / total) * 57), `تعبئة البند ${i + 1} من ${total}`);
+      if (o) { await flash(sels[i], '', true); if (sels[i].value !== o.value) { sels[i].value = o.value; fire(sels[i]); } } else um++;
+      prog(28 + Math.round(((i + 1) / total) * 57), `تعبئة البند ${i + 1} من ${total}`, 'info', 5);
       await sleep(120);
     }
     patch({ itemsDone: true, unmatched: um });
@@ -298,14 +357,14 @@
   }
   async function fillSuggestion() {
     const s = getS(); if (!s || !s.active) return;
-    prog(88, 'كتابة المقترح في «حقول الاستمارة»...');
+    prog(88, 'كتابة المقترح في «حقول الاستمارة»...', 'info', 6);
     let ta = [...document.querySelectorAll('textarea')].find(visible);
     if (!ta) {
-      const tab = findByText(['حقول الاستمارة']); if (tab) clickEl(tab);
+      const tab = findByText(['حقول الاستمارة']); if (tab) { await flash(tab, 'حقول الاستمارة'); clickEl(tab); }
       for (let i = 0; i < 25 && !ta; i++) { await sleep(400); ta = [...document.querySelectorAll('textarea')].find(visible) || document.querySelector('textarea'); }
     }
     if (!ta) { prog(88, 'لم أجد حقل المقترحات — افتح تبويب «حقول الاستمارة» وسأكمل', 'user'); return; }
-    ta.focus(); ta.value = (s.data.suggestion || '').slice(0, 1000); fire(ta);
+    await flash(ta, 'كتابة المقترح'); ta.focus(); ta.value = (s.data.suggestion || '').slice(0, 1000); fire(ta);
     patch({ sugDone: true });
     await finish();
   }
@@ -314,14 +373,15 @@
     const d = norm(DEFAULT_OPT);
     const remaining = formSelects().filter(x => norm(x.options[x.selectedIndex] ? x.options[x.selectedIndex].text : '') === d).length;
     const um = s.unmatched || 0;
-    const end = (pct, msg, kind) => { patch({ active: false, phase: 'done', ts: Date.now(), data: { answers: s.data.answers, suggestion: s.data.suggestion } }); prog(pct, msg, kind); };
-    if (remaining || um) return end(95, `تمت التعبئة، لكن ${remaining || um} بند لم يُطابق — أكمله ثم اضغط «حفظ»`, 'user');
-    if (!opts().autoSave) return end(100, 'اكتملت التعبئة 100% — راجع الاستمارة ثم اضغط «حفظ»', 'done');
-    prog(96, 'جارٍ الحفظ...');
+    const end = (pct, msg, kind, st) => { patch({ active: false, phase: 'done', ts: Date.now(), data: { answers: s.data.answers, suggestion: s.data.suggestion } }); prog(pct, msg, kind, st); };
+    if (remaining || um) return end(95, `تمت التعبئة، لكن ${remaining || um} بند لم يُطابق — أكمله ثم اضغط «حفظ»`, 'user', 5);
+    if (!opts().autoSave) return end(100, 'اكتملت التعبئة 100% — راجع الاستمارة ثم اضغط «حفظ» بنفسك', 'user', 7);
+    prog(96, 'جارٍ الحفظ...', 'info', 7);
     const btn = findByText(['حفظ', 'حفظ الاستمارة', 'حفظ البيانات', 'إرسال']);
-    if (!btn) return end(97, 'اكتملت التعبئة — لم أجد زر الحفظ، اضغط «حفظ» بنفسك', 'user');
+    if (!btn) return end(97, 'اكتملت التعبئة — لم أجد زر الحفظ، اضغط «حفظ» بنفسك', 'user', 7);
     try { unsafeWindow.confirm = () => true; } catch (e) {}
-    end(100, 'تم رفع الاستبانة وحفظها بنجاح ✔', 'done');
+    await flash(btn, 'حفظ');
+    end(100, 'تم رفع الاستبانة وحفظها بنجاح ✔', 'done', 8);
     await sleep(300);
     clickEl(btn);
   }
@@ -343,7 +403,7 @@
     if (pw && s.phase === 'login') {
       if (!s.data.pass) {
         const cur = GM_getValue(P, {});
-        if (TOP && cur.pct !== 3) prog(3, 'سجّل الدخول في البوابة — سيبدأ الرفع تلقائيًا بعد الدخول', 'user');
+        if (TOP && cur.pct !== 3) prog(3, 'سجّل الدخول في البوابة — سيبدأ الرفع تلقائيًا بعد الدخول', 'user', 0);
         return;
       }
       if (s.loginTs && Date.now() - s.loginTs < 15000) return;
@@ -356,7 +416,7 @@
       const cap = ins.find(i => i !== u && /captcha|code|verif|رمز/i.test((i.name || '') + (i.id || '') + (i.placeholder || '')))
         || document.querySelector('img[src*="aptcha" i],img[id*="aptcha" i]');
       if (cap) { prog(6, 'اكتب رمز التحقق ثم اضغط «دخول» — سيكمل الرفع تلقائيًا', 'user'); return; }
-      prog(6, 'جارٍ تسجيل الدخول...');
+      prog(6, 'جارٍ تسجيل الدخول...', 'info', 0);
       const btn = findByText(['دخول', 'تسجيل الدخول', 'تسجيل دخول', 'Login', 'Sign in']) || (pw.form && pw.form.querySelector('[type=submit]'));
       if (btn) clickEl(btn); else if (pw.form) pw.form.submit();
       return;
@@ -367,7 +427,7 @@
       if (s.loginTs && Date.now() - s.loginTs < 2500) return;
       const d = Object.assign({}, s.data); delete d.pass; // حذف كلمة المرور بعد الدخول
       patch({ phase: 'nav', data: d, step: 0, stepTs: Date.now(), ts: Date.now() });
-      prog(8, 'تم تسجيل الدخول — جارٍ فتح «أعمالي»...');
+      prog(8, 'تم تسجيل الدخول ✔ — جارٍ فتح «استبانات تطوير الأداء»...', 'info', 1);
       return;
     }
 
@@ -379,7 +439,7 @@
         if (s.formPickTs && Date.now() - s.formPickTs < 6000) return;
         const opt = [...fsel.options].find(o => norm(o.text).includes(key));
         patch({ formPickTs: Date.now(), itemsDone: false, sugDone: false });
-        prog(26, 'اختيار «استبانة استطلاع آراء أعضاء الهيئة التعليمية»...');
+        prog(26, 'اختيار «استبانة استطلاع آراء أعضاء الهيئة التعليمية»...', 'info', 4);
         fsel.value = opt.value; fire(fsel);
         return;
       }
@@ -394,19 +454,33 @@
     if (s.phase !== 'nav') return;
     if (TOP && /QuestionaireMain\.aspx/i.test(location.pathname) && s.step < 3) {
       s = patch({ step: 3, stepTs: Date.now() });
-      prog(18, 'تم فتح «استبانات تطوير الأداء» ← جارٍ الضغط على «عرض»');
+      prog(18, 'تم فتح «استبانات تطوير الأداء» ✔ — جارٍ الضغط على «عرض»', 'info', 2);
     }
     if (TOP && !s.directTried && s.step < 3) {
       patch({ directTried: true, stepTs: Date.now() });
-      prog(12, 'جارٍ فتح صفحة «استبانات تطوير الأداء»...');
+      prog(12, 'جارٍ فتح صفحة «استبانات تطوير الأداء»...', 'info', 1);
       location.href = Q_URL;
       return;
     }
     const elapsed = Date.now() - s.stepTs, cur = s.step;
-    const tryStep = idx => {
+    const uiOf = idx => idx <= 2 ? 1 : idx === 3 ? 2 : idx === 4 ? 3 : 4;
+    const tryStep = async idx => {
       const st = STEPS[idx]; if (!st) return false;
-      if (st.form) return chooseForm();
-      const el = findByText(st.t); if (el) { clickEl(el); return true; }
+      if (st.form) {
+        const key = norm(FORM_KEY);
+        const sel = [...document.querySelectorAll('select')].find(x => [...x.options].some(o => norm(o.text).includes(key)));
+        if (sel) { prog(null, 'اختيار الاستمارة...', 'info', 4); await flash(sel, st.name); }
+        return chooseForm();
+      }
+      const el = findByText(st.t);
+      if (el) { prog(null, `جارٍ الضغط على «${st.name}»...`, 'info', uiOf(idx)); await flash(el, st.name); clickEl(el); return true; }
+      // البحث بالاسم البرمجي للزر (id / name / صورة)
+      if (st.re) {
+        const c = [...document.querySelectorAll('input[type=submit],input[type=button],input[type=image],button,a,img,[onclick]')]
+          .filter(x => visible(x) && !x.closest('#saifPanel'))
+          .find(x => st.re.test([x.id, x.getAttribute('name'), x.getAttribute('src'), x.className, (x.getAttribute('onclick') || ''), (x.getAttribute('href') || '')].join(' ')));
+        if (c) { const t = c.closest('a,button') || c; prog(null, `جارٍ الضغط على «${st.name}»...`, 'info', uiOf(idx)); await flash(t, st.name); clickEl(t); return true; }
+      }
       // رابط داخل قائمة منسدلة مخفية: نفتح عنوانه مباشرة
       const nts = st.t.map(norm);
       const a = [...document.querySelectorAll('a[href]')].find(x => nts.includes(norm(x.textContent)) && !/^javascript|#$/i.test(x.getAttribute('href')));
@@ -419,14 +493,14 @@
       return;
     }
     let done = -1;
-    if (tryStep(cur)) done = cur;
-    else if (elapsed > wait / 2) { for (let j = cur + 1; j < STEPS.length; j++) if (tryStep(j)) { done = j; break; } }
+    if (await tryStep(cur)) done = cur;
+    else if (elapsed > wait / 2) { for (let j = cur + 1; j < STEPS.length; j++) if (await tryStep(j)) { done = j; break; } }
     if (done >= 0) {
       const nx = done + 1;
       patch({ step: nx, stepTs: Date.now() });
-      prog(8 + Math.round((nx / STEPS.length) * 18), STEPS[nx] ? `تم «${STEPS[done].name}» ← جارٍ فتح «${STEPS[nx].name}»` : 'جارٍ فتح الاستمارة...');
+      prog(8 + Math.round((nx / STEPS.length) * 18), STEPS[nx] ? `تم «${STEPS[done].name}» ✔ — التالي: «${STEPS[nx].name}»` : 'تم اختيار الاستمارة ✔ — جارٍ تحميل البنود...', 'info', nx >= STEPS.length ? 5 : uiOf(nx));
     } else if (elapsed > wait && TOP) {
-      prog(8 + Math.round((cur / STEPS.length) * 18), `لم أجد «${STEPS[cur].name}» — اضغطه بنفسك وسأكمل تلقائيًا`, 'user');
+      prog(8 + Math.round((cur / STEPS.length) * 18), `لم أجد «${STEPS[cur].name}» — اضغطه بنفسك وسأكمل تلقائيًا`, 'user', uiOf(cur));
     }
   }
 })();

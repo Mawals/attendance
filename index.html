@@ -132,6 +132,12 @@ footer b{color:var(--navy)}
 .pmsg.error{color:var(--c5);font-weight:700}
 .pmsg.done{color:var(--c1);font-weight:700}
 
+.psteps{list-style:none;margin:12px 0 0;padding:8px 10px;background:#f6f9fc;border-radius:12px;display:flex;flex-direction:column;gap:3px}
+.psteps li{display:flex;align-items:center;gap:8px;padding:3px 8px;border-radius:9px;color:var(--muted);font-size:14px}
+.psteps li i{font-style:normal;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;background:#e3e9ef;flex:none}
+.psteps li.ok{color:var(--c1)}.psteps li.ok i{background:var(--c1);color:#fff}
+.psteps li.cur{color:var(--navy);font-weight:700;background:#fff}.psteps li.cur i{background:var(--teal);color:#fff}
+.psteps li.warn{color:#b36b00;font-weight:700;background:#fff7e6}.psteps li.warn i{background:#e0a100;color:#fff}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:12px;display:none;z-index:60}
 
 .mob{display:none}
@@ -232,6 +238,7 @@ body.is-mobile .desk{display:none}
         <li>بعد الدخول تبدأ الأداة الرفع تلقائيًا، ويظهر التقدّم هنا وفي البوابة.</li>
       </ol>
     </div>
+    <ol class="psteps" id="pSteps"></ol>
     <div class="pbar"><i id="pBar"></i></div>
     <div class="pct" id="pPct">0%</div>
     <div class="pmsg" id="pMsg">بانتظار الضغط على زر «رفع الاستبانة» في البوابة...</div>
@@ -420,10 +427,21 @@ $('#uploadBtn').onclick = () => {
   const payload = { showPortal: true, answers: d.answers, suggestion: PREFIX + d.suggestion };
   $('#howto').style.display = '';
   setProg(1, 'بانتظار تسجيل الدخول في البوابة...', '');
+  renderSteps(0, 'user', 1);
   $('#progModal').classList.add('show');
   window.postMessage({ type:'SAIF_SURVEY_UPLOAD', payload: JSON.stringify(payload) }, '*');
 };
 
+const P_STEPS = ['تسجيل الدخول في البوابة','فتح «استبانات تطوير الأداء»','الضغط على «عرض»','الضغط على «اضافة»','اختيار استمارة أعضاء الهيئة التعليمية','تعبئة البنود','كتابة المقترح','الحفظ'];
+function renderSteps(st, kind, pct){
+  $('#pSteps').innerHTML = P_STEPS.map((t,i)=>{
+    let c='', ic='○';
+    if((kind==='done' && pct>=100) || i<st){ c='ok'; ic='✔'; }
+    else if(i===st){ c=(kind==='user'||kind==='error')?'warn':'cur'; ic=c==='warn'?'!':'▶'; }
+    return `<li class="${c}"><i>${ic}</i><span>${t}</span></li>`;
+  }).join('');
+}
+renderSteps(-1,'',0);
 function setProg(p, msg, kind){
   $('#pBar').style.width = p+'%';
   $('#pPct').textContent = Math.round(p)+'%';
@@ -436,6 +454,7 @@ window.addEventListener('message', e=>{
   if(d.type==='SAIF_SURVEY_READY'){ if(!toolReady){ toolReady = true; unlock(); } return; }
   if(d.type==='SAIF_SURVEY_PROGRESS'){
     setProg(d.pct, d.msg, d.kind);
+    if(d.st!=null) renderSteps(d.st, d.kind, d.pct);
     if(d.kind==='done') toast('اكتمل الرفع بنجاح ✔');
   }
 });
