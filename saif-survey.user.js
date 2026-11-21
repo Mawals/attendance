@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         رافع استبانة آراء المعلمين — سيف المعولي
 // @namespace    saif.almawali.teacher-survey
-// @version      1.6.3
+// @version      1.6.4
 // @description  يرفع «استبانة استطلاع آراء أعضاء الهيئة التعليمية في الحياة المدرسية» إلى البوابة التعليمية تلقائيًا في الخلفية. تصميم: سيف جمال المعولي — معولة بن شمس
 // @author       سيف جمال المعولي
 // @match        *://*.moe.gov.om/*
@@ -20,7 +20,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '1.6.3';
+  const VERSION = '1.6.4';
   const LOGIN_URL = 'https://moe.gov.om/portal/Services/UserLoginnew.aspx';
   const Q_URL = 'https://moe.gov.om/SMS/Questionaires/QuestionaireMain.aspx';
   const FORM_KEY = 'استطلاع آراء أعضاء الهيئة التعليمية';
@@ -176,6 +176,26 @@
 #saifPanel .steps li.cur{color:var(--dk);font-weight:bold;background:var(--bg)}#saifPanel .steps li.cur i{background:var(--a);color:#fff;animation:saifp 1.2s infinite}
 #saifPanel .steps li.warn{color:#8a5a00;font-weight:bold;background:#fff4d6}#saifPanel .steps li.warn i{background:#e0a100;color:#fff}
 @keyframes saifp{50%{box-shadow:0 0 0 5px rgba(230,185,58,.35)}}
+#saifPanel .mp{display:none;font-weight:bold;color:var(--dk);font-size:12px;background:#fff;border:1px solid var(--a2);border-radius:9px;padding:2px 7px}
+#saifPanel.min .mp{display:inline-block}
+#saifPanel.mob{right:auto;max-width:none;border-radius:16px;font-size:12px;max-height:70vh;display:flex;flex-direction:column}
+  #saifPanel.mob .body{overflow-y:auto;padding:8px;gap:7px}
+  #saifPanel.mob .hd{padding:8px 10px;gap:6px}
+  #saifPanel.mob .bd{width:32px;height:32px;font-size:9px;border-radius:10px}
+  #saifPanel.mob .tt b{font-size:12.5px}#saifPanel.mob .tt small{font-size:10px}
+  #saifPanel.mob .dots{display:none}
+  #saifPanel.mob .steps{padding:6px;display:grid;grid-template-columns:1fr 1fr;gap:2px 6px}
+  #saifPanel.mob .steps li{font-size:11px;padding:2px 4px;gap:5px}
+  #saifPanel.mob .steps li i{width:16px;height:16px;font-size:9px}
+  #saifPanel.mob .go{padding:10px;font-size:13px}
+  #saifPanel.mob .card{padding:7px 10px;gap:4px}
+  #saifPanel.mob .stop,#saifPanel.mob .scan{padding:7px;font-size:12px}
+  #saifPanel.mob .scan{display:none}
+  #saifPanel.mob .st{padding:7px 10px;min-height:0}
+  #saifPanel.mob .ft{display:none}
+  #saifPanel.mob.min{width:auto!important}
+  #saifPanel.mob.min .tt small{display:none}
+
 #saifPanel .scan{border:1.5px dashed var(--a2);border-radius:14px;padding:9px;background:transparent;color:var(--dk);cursor:pointer;font-weight:bold}
 #saifPanel .bar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden}
 #saifPanel .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--a2),var(--a));transition:width .35s}
@@ -195,6 +215,7 @@
         <div class="bd">استبانة<i></i></div>
         <div class="tt"><b>رافع استبانة المعلمين</b><small>الأتمتة الذكية • الإصدار ${VERSION}</small></div>
         <div class="dots">${Object.keys(THEMES).map(k => `<span data-t="${k}" style="background:${THEMES[k][0]}"></span>`).join('')}</div>
+        <span class="mp">0%</span>
         <button class="mn" title="تصغير">—</button>
       </div>
       <div class="body">
@@ -214,6 +235,19 @@
       </div>
       <div class="ft"><div class="ic">👤</div><div><b>سيف جمال المعولي</b><small>معولة بن شمس (5-12)</small></div></div>`;
     document.body.appendChild(panel);
+    // ملاءمة الهاتف: البوابة تُعرض مصغّرة على الهاتف، فنكبّر اللوحة لتناسب عرض الشاشة
+    const fitMobile = () => {
+      const mob = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || (screen.width && screen.width <= 640);
+      panel.classList.toggle('mob', !!mob);
+      if (!mob) { panel.style.zoom = ''; return; }
+      const f = Math.max(1, innerWidth / (screen.width || innerWidth));
+      panel.style.zoom = String(f);
+      panel.style.left = (8 / f) + 'px'; panel.style.bottom = (8 / f) + 'px';
+      panel.style.width = panel.classList.contains('min') ? 'auto' : ((innerWidth / f) - 16) + 'px';
+      panel.style.maxHeight = ((innerHeight / f) * 0.7) + 'px';
+    };
+    fitMobile(); addEventListener('resize', fitMobile);
+    panel._fit = fitMobile;
 
     // الثيم
     const applyTheme = k => {
@@ -224,8 +258,9 @@
     applyTheme(GM_getValue(T, 'gold'));
     panel.querySelectorAll('.dots span').forEach(s => s.onclick = () => { GM_setValue(T, s.dataset.t); applyTheme(s.dataset.t); });
     // تصغير
-    panel.querySelector('.mn').onclick = () => { panel.classList.toggle('min'); GM_setValue('SAIF_SV_MIN', panel.classList.contains('min')); };
-    if (GM_getValue('SAIF_SV_MIN', false)) panel.classList.add('min');
+    panel.querySelector('.mn').onclick = () => { panel.classList.toggle('min'); GM_setValue('SAIF_SV_MIN', panel.classList.contains('min')); panel._fit && panel._fit(); };
+    if (GM_getValue('SAIF_SV_MIN', /Android|iPhone|Mobile/i.test(navigator.userAgent))) panel.classList.add('min');
+    panel._fit && panel._fit();
     // سحب
     (function drag() {
       const hd = panel.querySelector('.hd'); let sx, sy, sl, sb, on = false;
@@ -274,7 +309,7 @@
     const has = !!(s && s.data && s.data.answers);
     panel.querySelector('.dt').textContent = has ? `${s.data.answers.length} بندًا ✔` : 'لا توجد بيانات';
     panel.querySelector('.bd').classList.toggle('off', !(s && s.active));
-    if (s && s.active) panel.classList.remove('min');
+    if (s && s.active && panel.classList.contains('min')) { panel.classList.remove('min'); panel._fit && panel._fit(); }
     panel.querySelector('.go').disabled = !has || !!(s && s.active);
     const lis = panel.querySelectorAll('.steps li');
     const live = p && s && (s.active || Date.now() - p.t < 10 * 60000);
@@ -289,6 +324,7 @@
     if (p && (s && (s.active || Date.now() - p.t < 10 * 60000))) {
       panel.querySelector('.bar i').style.width = p.pct + '%';
       panel.querySelector('.pp').textContent = Math.round(p.pct) + '%';
+      panel.querySelector('.mp').textContent = Math.round(p.pct) + '%';
       st.textContent = p.msg; st.className = 'st ' + p.kind;
     } else {
       panel.querySelector('.bar i').style.width = '0';
