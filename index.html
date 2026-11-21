@@ -59,6 +59,7 @@ body.locked .wrap{filter:blur(3px);pointer-events:none;user-select:none}
 .stp.last{background:#e9f7f1;border:1.5px solid var(--teal);animation:pulse 1.6s infinite}
 .stp.last .sn{background:var(--teal)}
 .dropzone{text-align:center}
+.hint2{font-size:12px;color:var(--muted);margin-top:6px}
 .links{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.links a{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:4px 12px;text-decoration:none;color:var(--navy);font-weight:700;font-size:13px}.links a:hover{border-color:var(--navy)}
 .alt{margin-top:14px;font-size:13px;border-top:1px dashed var(--line);padding-top:10px}
 .alt summary{cursor:pointer;color:var(--navy);font-weight:700}
@@ -265,7 +266,17 @@ body.is-mobile .desk{display:none}
       </div></div></div>
 
     <div class="stp"><span class="sn">2</span><div>اضغط الزر التالي ثم اختر <b>«تثبيت / Install»</b>:
-      <div style="margin-top:6px"><a class="bm" href="saif-survey.user.js" target="_blank">⬇ تثبيت أداة رفع الاستبانة</a></div></div></div>
+      <div style="margin-top:6px"><a class="bm" id="installBtn" href="saif-survey.user.js" target="_blank">⬇ تثبيت أداة رفع الاستبانة</a></div>
+      <div class="hint2">بعد تثبيت Tampermonkey أعد تحميل هذه الصفحة أولًا، ثم اضغط الزر.</div>
+      <details class="alt" style="margin-top:8px"><summary>ظهر الكود كصفحة نصية ولم تظهر نافذة التثبيت؟</summary>
+        <ol>
+          <li>اضغط: <button class="btn ghost" style="padding:3px 10px;font-size:12px" id="copyUrl">نسخ رابط الأداة</button></li>
+          <li>اضغط أيقونة <b>Tampermonkey</b> 🧩 أعلى المتصفح ← <b>لوحة التحكم (Dashboard)</b>.</li>
+          <li>افتح تبويب <b>الأدوات المساعدة (Utilities)</b>.</li>
+          <li>في خانة <b>التثبيت من رابط (Install from URL)</b> الصق الرابط بـ Ctrl + V ثم اضغط <b>تثبيت (Install)</b>.</li>
+          <li>في الصفحة التالية اضغط <b>تثبيت (Install)</b>، ثم ارجع وحدّث صفحة الاستبانة.</li>
+        </ol>
+      </details></div></div>
 
     <div class="stp last"><span class="sn">3</span><div>حدّث هذه الصفحة (<b>F5</b>) وستنفتح الاستبانة تلقائيًا 🔓</div></div>
 
@@ -367,6 +378,9 @@ $('#today').textContent = new Date().toLocaleDateString('ar-OM',{year:'numeric',
 
 /* ===== الاتصال بأداة الرفع (Tampermonkey) ===== */
 let toolReady = false;
+const SCRIPT_URL = new URL('saif-survey.user.js', location.href).href;
+$('#installBtn').href = 'https://www.tampermonkey.net/script_installation.php#url=' + encodeURIComponent(SCRIPT_URL);
+$('#copyUrl').onclick = () => copyText(SCRIPT_URL).then(()=>toast('تم نسخ رابط الأداة'));
 function lock(){ document.body.classList.add('locked'); $('#setupModal').classList.add('show'); }
 function unlock(){ document.body.classList.remove('locked'); $('#setupModal').classList.remove('show'); }
 lock();
