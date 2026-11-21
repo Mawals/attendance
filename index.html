@@ -59,6 +59,7 @@ body.locked .wrap{filter:blur(3px);pointer-events:none;user-select:none}
 .stp.last{background:#e9f7f1;border:1.5px solid var(--teal);animation:pulse 1.6s infinite}
 .stp.last .sn{background:var(--teal)}
 .dropzone{text-align:center}
+.warnbox{display:none;background:#fdecec;border:1.5px solid #e8a0a0;color:#9b1c1c;border-radius:12px;padding:10px 12px;margin:8px 0;font-size:14px;line-height:1.8}
 .hint2{font-size:12px;color:var(--muted);margin-top:6px}
 .links{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.links a{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:4px 12px;text-decoration:none;color:var(--navy);font-weight:700;font-size:13px}.links a:hover{border-color:var(--navy)}
 .alt{margin-top:14px;font-size:13px;border-top:1px dashed var(--line);padding-top:10px}
@@ -258,10 +259,11 @@ body.is-mobile .desk{display:none}
       <p class="sub">خطوات تُنفَّذ مرة واحدة فقط على جهازك</p>
     </div>
 
+    <div class="warnbox" id="chromeMobileWarn">⚠️ أنت تستخدم <b>كروم على الهاتف</b> وهو لا يدعم الإضافات، فلن تعمل أداة الرفع فيه.<br>افتح هذا الرابط في <b>فايرفوكس</b> أو <b>إيدج</b> على هاتفك، أو استخدم الحاسوب.
+      <button class="btn ghost" style="padding:4px 12px;font-size:13px;margin-top:6px" id="copyPage">نسخ رابط الاستبانة</button></div>
     <div class="stp"><span class="sn">1</span><div>ثبّت إضافة <b>Tampermonkey</b> لمتصفحك:
       <div class="links">
         <a href="https://addons.mozilla.org/firefox/addon/tampermonkey/" target="_blank">فايرفوكس</a>
-        <a href="https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo" target="_blank">كروم</a>
         <a href="https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd" target="_blank">إيدج</a>
       </div></div></div>
 
@@ -281,8 +283,8 @@ body.is-mobile .desk{display:none}
     <div class="stp last"><span class="sn">3</span><div>حدّث هذه الصفحة (<b>F5</b>) وستنفتح الاستبانة تلقائيًا 🔓</div></div>
 
     <div class="note" style="margin-top:10px">
-      <b>في كروم وإيدج:</b> إذا لم تنفتح بعد التحديث: افتح صفحة الإضافات ← تفاصيل Tampermonkey ← فعّل <b>«السماح بالنصوص البرمجية للمستخدم / Allow User Scripts»</b> ثم حدّث الصفحة.
-      <br><b>على الهاتف:</b> استخدم فايرفوكس للأندرويد وثبّت فيه Tampermonkey بنفس الخطوات.
+      <b>في إيدج:</b> إذا لم تنفتح بعد التحديث: افتح صفحة الإضافات ← تفاصيل Tampermonkey ← فعّل <b>«السماح بالنصوص البرمجية للمستخدم / Allow User Scripts»</b> ثم حدّث الصفحة.
+      <br><b>على الهاتف:</b> استخدم <b>فايرفوكس</b> أو <b>إيدج</b> وثبّت فيه Tampermonkey.
     </div>
   </div>
 </div>
@@ -378,6 +380,9 @@ $('#today').textContent = new Date().toLocaleDateString('ar-OM',{year:'numeric',
 
 /* ===== الاتصال بأداة الرفع (Tampermonkey) ===== */
 let toolReady = false;
+const ua = navigator.userAgent;
+if(/Android/i.test(ua) && /Chrome\//.test(ua) && !/EdgA|Edg\/|Firefox|SamsungBrowser|OPR|Kiwi|YaBrowser/i.test(ua)) document.getElementById('chromeMobileWarn').style.display='block';
+document.getElementById('copyPage').onclick = () => copyText(location.href.split('#')[0]).then(()=>toast('تم نسخ الرابط — الصقه في فايرفوكس أو إيدج'));
 const SCRIPT_URL = new URL('saif-survey.user.js', location.href).href;
 $('#installBtn').href = SCRIPT_URL;
 $('#copyUrl').onclick = () => copyText(SCRIPT_URL).then(()=>toast('تم نسخ رابط الأداة'));
