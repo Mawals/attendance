@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         رافع استبانة آراء المعلمين — سيف المعولي
 // @namespace    saif.almawali.teacher-survey
-// @version      1.5
+// @version      1.6.1
 // @description  يرفع «استبانة استطلاع آراء أعضاء الهيئة التعليمية في الحياة المدرسية» إلى البوابة التعليمية تلقائيًا في الخلفية. تصميم: سيف جمال المعولي — معولة بن شمس
 // @author       سيف جمال المعولي
 // @match        *://*.moe.gov.om/*
@@ -20,7 +20,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '1.5';
+  const VERSION = '1.6.1';
   const LOGIN_URL = 'https://moe.gov.om/portal/Services/UserLoginnew.aspx';
   const Q_URL = 'https://moe.gov.om/SMS/Questionaires/QuestionaireMain.aspx';
   const FORM_KEY = 'استطلاع آراء أعضاء الهيئة التعليمية';
@@ -44,8 +44,16 @@
   const opts = () => Object.assign({ autoSave: true, wait: 25 }, GM_getValue(O, {}));
   const visible = el => !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
   function fire(el) { ['input', 'change'].forEach(t => el.dispatchEvent(new Event(t, { bubbles: true }))); }
+  function runInPage(code) {
+    const sc = document.createElement('script'); sc.textContent = code;
+    (document.head || document.documentElement).appendChild(sc); sc.remove();
+  }
   function clickEl(el) {
     try { el.scrollIntoView({ block: 'center' }); } catch (e) {}
+    // روابط javascript: (مثل تبويب «حقول الاستمارة») تُنفَّذ مباشرة داخل الصفحة
+    const a = el.closest && el.closest('a');
+    const href = a && a.getAttribute('href') || '';
+    if (/^javascript:/i.test(href) && !a.getAttribute('onclick')) { runInPage(decodeURIComponent(href.replace(/^javascript:/i, ''))); return; }
     ['mouseover', 'mousedown', 'mouseup'].forEach(t => el.dispatchEvent(new MouseEvent(t, { bubbles: true, cancelable: true, view: window })));
     el.click();
   }
@@ -113,7 +121,7 @@
       if (d.type === 'SAIF_SURVEY_PING') send({ type: 'SAIF_SURVEY_READY', version: VERSION });
       if (d.type === 'SAIF_SURVEY_UPLOAD' && d.payload) {
         const p = d.payload;
-        setS({ active: true, phase: 'login', step: 0, directTried: false, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false,
+        setS({ active: true, phase: 'login', step: 0, directTried: false, qm: null, saving: false, waitItemsTs: 0, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false,
                data: { user: p.user, pass: p.pass, answers: p.answers, suggestion: p.suggestion } });
         if ('autoSave' in p) GM_setValue(O, Object.assign(opts(), { autoSave: !!p.autoSave }));
         prog(2, 'تم استلام الإجابات — سجّل الدخول في البوابة وسيبدأ الرفع تلقائيًا', 'user', 0);
@@ -235,7 +243,7 @@
     panel.querySelector('.go').onclick = () => {
       const s = getS();
       if (!s || !s.data || !s.data.answers) return render();
-      setS(Object.assign(s, { active: true, phase: findPassword(document) ? 'login' : 'nav', step: 0, directTried: false, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false }));
+      setS(Object.assign(s, { active: true, phase: findPassword(document) ? 'login' : 'nav', step: 0, directTried: false, qm: null, saving: false, waitItemsTs: 0, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false }));
       prog(4, 'بدأ الرفع...');
     };
     panel.querySelector('.scan').onclick = () => {
@@ -377,13 +385,54 @@
     if (remaining || um) return end(95, `تمت التعبئة، لكن ${remaining || um} بند لم يُطابق — أكمله ثم اضغط «حفظ»`, 'user', 5);
     if (!opts().autoSave) return end(100, 'اكتملت التعبئة 100% — راجع الاستمارة ثم اضغط «حفظ» بنفسك', 'user', 7);
     prog(96, 'جارٍ الحفظ...', 'info', 7);
-    const btn = findByText(['حفظ', 'حفظ الاستمارة', 'حفظ البيانات', 'إرسال']);
+    const btn = document.getElementById('ctl00_applicationPageContentPlaceHolder_btnAdd') || findByText(['حفظ', 'حفظ الاستمارة', 'حفظ البيانات']);
     if (!btn) return end(97, 'اكتملت التعبئة — لم أجد زر الحفظ، اضغط «حفظ» بنفسك', 'user', 7);
-    try { unsafeWindow.confirm = () => true; } catch (e) {}
+    hookSave();
+    let result = null;
+    const onRes = e => { result = String(e.detail || ''); };
+    document.addEventListener('saif-save', onRes);
     await flash(btn, 'حفظ');
-    end(100, 'تم رفع الاستبانة وحفظها بنجاح ✔', 'done', 8);
-    await sleep(300);
+    patch({ saving: true });
     clickEl(btn);
+    for (let k = 0; k < 60 && !result; k++) await sleep(500);
+    document.removeEventListener('saif-save', onRes);
+    patch({ saving: false });
+    if (result && /^ok:[12]$/.test(result)) return end(100, 'تم رفع الاستبانة وحفظها في البوابة بنجاح ✔', 'done', 8);
+    if (result && result.startsWith('msg:')) return end(97, 'رسالة البوابة: ' + result.replace(/^msg:[^:]*:/, ''), 'error', 7);
+    return end(98, 'تم الضغط على «حفظ» — لم تصل رسالة تأكيد، تحقق من القائمة', 'user', 7);
+  }
+
+  /* ================= صفحة استبانات تطوير الأداء ================= */
+  async function qMain(s) {
+    const byId = id => document.getElementById('ctl00_applicationPageContentPlaceHolder_' + id);
+    const val = id => { const d = byId('schoolFilter_' + id); return d && d.options[d.selectedIndex] ? d.options[d.selectedIndex].value : ''; };
+    const formUrl = () => location.origin + '/SMS/Questionaires/Questionaire.aspx?SchYearID=' + val('ddlScholasticYears') + '&SchoolId=' + val('ddlSchools') + '&EduSysId=' + val('ddlEducationSystems');
+    if (!s.qm) {
+      const show = byId('showImageButton') || findByText(['عرض']);
+      if (!show) return;
+      prog(16, 'تم فتح «استبانات تطوير الأداء» ✔ — جارٍ الضغط على «عرض»', 'info', 2);
+      await flash(show, 'عرض');
+      patch({ qm: 'shown', stepTs: Date.now() });
+      clickEl(show);
+      return;
+    }
+    if (s.qm === 'shown') {
+      const add = byId('ImgAdd');
+      const ready = add && visible(add);
+      if (!ready && Date.now() - s.stepTs < 15000) return;
+      prog(22, 'تم «عرض» ✔ — جارٍ فتح «اضافة»', 'info', 3);
+      if (ready) await flash(add, 'اضافة');
+      if (!val('ddlSchools')) { prog(22, 'لم أستطع قراءة بيانات المدرسة — اضغط «اضافة» بنفسك', 'user', 3); return; }
+      patch({ qm: 'add', phase: 'form', stepTs: Date.now() });
+      location.href = formUrl();
+    }
+  }
+  function hookSave() {
+    const sc = document.createElement('script');
+    sc.textContent = '(function(){if(window.__saifHooked)return;window.__saifHooked=1;var f=window.onCallingSuccess,g=window.RaiseMessage,c=window.CloseWinAndReturn;' +
+      'window.onCallingSuccess=function(r){document.dispatchEvent(new CustomEvent("saif-save",{detail:"ok:"+r}));if(r=="1"||r=="2"){return;}try{return f.apply(this,arguments)}catch(e){}};' +
+      'window.RaiseMessage=function(m,t){document.dispatchEvent(new CustomEvent("saif-save",{detail:"msg:"+t+":"+m}));return g&&g.apply(this,arguments)};})();';
+    (document.head || document.documentElement).appendChild(sc); sc.remove();
   }
 
   /* ================= الحلقة الرئيسية ================= */
@@ -432,6 +481,10 @@
     }
 
     // 2) صفحة الاستمارة
+    if (s.saving) {
+      if (TOP) { patch({ active: false, phase: 'done', saving: false, ts: Date.now() }); prog(100, 'تم إرسال الاستبانة للحفظ ✔ — تأكد من ظهورها في قائمة «استبانات تطوير الأداء»', 'done', 8); }
+      return;
+    }
     if (formSelects().length >= 5) {
       const key = norm(FORM_KEY);
       const fsel = [...document.querySelectorAll('select')].find(x => [...x.options].some(o => norm(o.text).includes(key)));
@@ -444,7 +497,15 @@
         return;
       }
       if (s.phase !== 'fill') s = patch({ phase: 'fill' });
-      if (!s.itemsDone) return fillForm(s);
+      if (!s.itemsDone) {
+        const all = formSelects(), ok = all.filter(x => bestItem(rowLabel(x), s.data.answers)).length;
+        if (ok < all.length * 0.9) {
+          if (!s.waitItemsTs) patch({ waitItemsTs: Date.now() });
+          else if (Date.now() - s.waitItemsTs > 20000) prog(27, 'بنود الاستمارة لا تطابق استبانة أعضاء الهيئة التعليمية — اخترها من القائمة بنفسك', 'user', 4);
+          return;
+        }
+        return fillForm(s);
+      }
       if (!s.sugDone) return fillSuggestion();
       return finish();
     }
@@ -452,10 +513,7 @@
 
     // 3) التنقل
     if (s.phase !== 'nav') return;
-    if (TOP && /QuestionaireMain\.aspx/i.test(location.pathname) && s.step < 3) {
-      s = patch({ step: 3, stepTs: Date.now() });
-      prog(18, 'تم فتح «استبانات تطوير الأداء» ✔ — جارٍ الضغط على «عرض»', 'info', 2);
-    }
+    if (TOP && /QuestionaireMain\.aspx/i.test(location.pathname)) return qMain(s);
     if (TOP && !s.directTried && s.step < 3) {
       patch({ directTried: true, stepTs: Date.now() });
       prog(12, 'جارٍ فتح صفحة «استبانات تطوير الأداء»...', 'info', 1);
