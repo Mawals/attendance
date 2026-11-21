@@ -421,7 +421,7 @@ $('#uploadBtn').onclick = () => {
   $('#howto').style.display = '';
   setProg(1, 'بانتظار تسجيل الدخول في البوابة...', '');
   $('#progModal').classList.add('show');
-  window.postMessage({ type:'SAIF_SURVEY_UPLOAD', payload }, '*');
+  window.postMessage({ type:'SAIF_SURVEY_UPLOAD', payload: JSON.stringify(payload) }, '*');
 };
 
 function setProg(p, msg, kind){
@@ -430,7 +430,9 @@ function setProg(p, msg, kind){
   const m = $('#pMsg'); m.textContent = msg; m.className = 'pmsg ' + (kind||'');
 }
 window.addEventListener('message', e=>{
-  const d = e.data; if(!d || d.from!=='saif-userscript') return;
+  let d = e.data;
+  if(typeof d === 'string'){ try{ d = JSON.parse(d); }catch(x){ return; } }
+  if(!d || d.from!=='saif-userscript') return;
   if(d.type==='SAIF_SURVEY_READY'){ if(!toolReady){ toolReady = true; unlock(); } return; }
   if(d.type==='SAIF_SURVEY_PROGRESS'){
     setProg(d.pct, d.msg, d.kind);

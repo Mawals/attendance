@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         رافع استبانة آراء المعلمين — سيف المعولي
 // @namespace    saif.almawali.teacher-survey
-// @version      1.2
+// @version      1.3
 // @description  يرفع «استبانة استطلاع آراء أعضاء الهيئة التعليمية في الحياة المدرسية» إلى البوابة التعليمية تلقائيًا في الخلفية. تصميم: سيف جمال المعولي — معولة بن شمس
 // @author       سيف جمال المعولي
 // @match        *://*.moe.gov.om/*
@@ -19,8 +19,10 @@
 (function () {
   'use strict';
 
-  const VERSION = '1.2';
-  const LOGIN_URL = 'https://moe.gov.om/Portal/Services/UserLoginnew.aspx';
+  const VERSION = '1.3';
+  const LOGIN_URL = 'https://moe.gov.om/portal/Services/UserLoginnew.aspx';
+  const Q_URL = 'https://moe.gov.om/SMS/Questionaires/QuestionaireMain.aspx';
+  const FORM_KEY = 'استطلاع آراء أعضاء الهيئة التعليمية';
   const K = 'SAIF_SV_STATE', P = 'SAIF_SV_PROG', T = 'SAIF_SV_THEME', O = 'SAIF_SV_OPTS';
   const TOP = window.top === window.self;
   const DEFAULT_OPT = 'غير مقيم';
@@ -78,15 +80,17 @@
   if (/github\.io$/i.test(location.hostname)) {
     if (!document.getElementById('saif-survey-app')) return;
     const page = unsafeWindow;
-    const send = m => page.postMessage(Object.assign({ from: 'saif-userscript' }, m), '*');
+    const send = m => window.postMessage(JSON.stringify(Object.assign({ from: 'saif-userscript' }, m)), '*');
     send({ type: 'SAIF_SURVEY_READY', version: VERSION });
     window.addEventListener('message', e => {
-      const d = e.data;
+      let d = e.data;
+      if (typeof d === 'string') { try { d = JSON.parse(d); } catch (x) { return; } }
       if (!d || d.from === 'saif-userscript') return;
+      if (d.type === 'SAIF_SURVEY_UPLOAD' && typeof d.payload === 'string') { try { d.payload = JSON.parse(d.payload); } catch (x) { return; } }
       if (d.type === 'SAIF_SURVEY_PING') send({ type: 'SAIF_SURVEY_READY', version: VERSION });
       if (d.type === 'SAIF_SURVEY_UPLOAD' && d.payload) {
         const p = d.payload;
-        setS({ active: true, phase: 'login', step: 0, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false,
+        setS({ active: true, phase: 'login', step: 0, directTried: false, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false,
                data: { user: p.user, pass: p.pass, answers: p.answers, suggestion: p.suggestion } });
         if ('autoSave' in p) GM_setValue(O, Object.assign(opts(), { autoSave: !!p.autoSave }));
         prog(2, 'تم استلام الإجابات — سجّل الدخول في البوابة وسيبدأ الرفع تلقائيًا', 'user');
@@ -198,7 +202,7 @@
     panel.querySelector('.go').onclick = () => {
       const s = getS();
       if (!s || !s.data || !s.data.answers) return render();
-      setS(Object.assign(s, { active: true, phase: findPassword(document) ? 'login' : 'nav', step: 0, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false }));
+      setS(Object.assign(s, { active: true, phase: findPassword(document) ? 'login' : 'nav', step: 0, directTried: false, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false }));
       prog(4, 'بدأ الرفع...');
     };
     panel.querySelector('.stop').onclick = () => { patch({ active: false, phase: 'stopped' }); prog(0, 'تم الإيقاف.', 'error'); };
@@ -212,6 +216,7 @@
     const has = !!(s && s.data && s.data.answers);
     panel.querySelector('.dt').textContent = has ? `${s.data.answers.length} بندًا ✔` : 'لا توجد بيانات';
     panel.querySelector('.bd').classList.toggle('off', !(s && s.active));
+    if (s && s.active) panel.classList.remove('min');
     panel.querySelector('.go').disabled = !has || !!(s && s.active);
     const st = panel.querySelector('.st');
     if (p && (s && (s.active || Date.now() - p.t < 10 * 60000))) {
@@ -237,7 +242,7 @@
     { name: 'اختيار الاستمارة', form: true }
   ];
   function chooseForm() {
-    const key = norm('استطلاع آراء أعضاء الهيئة التعليمية');
+    const key = norm(FORM_KEY);
     for (const sel of document.querySelectorAll('select')) {
       const opt = [...sel.options].find(o => norm(o.text).includes(key));
       if (opt) { if (sel.value !== opt.value) { sel.value = opt.value; fire(sel); } return true; }
@@ -368,6 +373,16 @@
 
     // 2) صفحة الاستمارة
     if (formSelects().length >= 5) {
+      const key = norm(FORM_KEY);
+      const fsel = [...document.querySelectorAll('select')].find(x => [...x.options].some(o => norm(o.text).includes(key)));
+      if (fsel && !norm(fsel.options[fsel.selectedIndex] ? fsel.options[fsel.selectedIndex].text : '').includes(key)) {
+        if (s.formPickTs && Date.now() - s.formPickTs < 6000) return;
+        const opt = [...fsel.options].find(o => norm(o.text).includes(key));
+        patch({ formPickTs: Date.now(), itemsDone: false, sugDone: false });
+        prog(26, 'اختيار «استبانة استطلاع آراء أعضاء الهيئة التعليمية»...');
+        fsel.value = opt.value; fire(fsel);
+        return;
+      }
       if (s.phase !== 'fill') s = patch({ phase: 'fill' });
       if (!s.itemsDone) return fillForm(s);
       if (!s.sugDone) return fillSuggestion();
@@ -377,11 +392,25 @@
 
     // 3) التنقل
     if (s.phase !== 'nav') return;
+    if (TOP && /QuestionaireMain\.aspx/i.test(location.pathname) && s.step < 3) {
+      s = patch({ step: 3, stepTs: Date.now() });
+      prog(18, 'تم فتح «استبانات تطوير الأداء» ← جارٍ الضغط على «عرض»');
+    }
+    if (TOP && !s.directTried && s.step < 3) {
+      patch({ directTried: true, stepTs: Date.now() });
+      prog(12, 'جارٍ فتح صفحة «استبانات تطوير الأداء»...');
+      location.href = Q_URL;
+      return;
+    }
     const elapsed = Date.now() - s.stepTs, cur = s.step;
     const tryStep = idx => {
       const st = STEPS[idx]; if (!st) return false;
       if (st.form) return chooseForm();
       const el = findByText(st.t); if (el) { clickEl(el); return true; }
+      // رابط داخل قائمة منسدلة مخفية: نفتح عنوانه مباشرة
+      const nts = st.t.map(norm);
+      const a = [...document.querySelectorAll('a[href]')].find(x => nts.includes(norm(x.textContent)) && !/^javascript|#$/i.test(x.getAttribute('href')));
+      if (a) { location.href = a.href; return true; }
       return false;
     };
     if (cur >= STEPS.length) {
