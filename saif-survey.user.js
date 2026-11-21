@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         رافع استبانة آراء المعلمين — سيف المعولي
 // @namespace    saif.almawali.teacher-survey
-// @version      1.6.1
+// @version      1.6.3
 // @description  يرفع «استبانة استطلاع آراء أعضاء الهيئة التعليمية في الحياة المدرسية» إلى البوابة التعليمية تلقائيًا في الخلفية. تصميم: سيف جمال المعولي — معولة بن شمس
 // @author       سيف جمال المعولي
 // @match        *://*.moe.gov.om/*
@@ -20,7 +20,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '1.6.1';
+  const VERSION = '1.6.3';
   const LOGIN_URL = 'https://moe.gov.om/portal/Services/UserLoginnew.aspx';
   const Q_URL = 'https://moe.gov.om/SMS/Questionaires/QuestionaireMain.aspx';
   const FORM_KEY = 'استطلاع آراء أعضاء الهيئة التعليمية';
@@ -121,7 +121,7 @@
       if (d.type === 'SAIF_SURVEY_PING') send({ type: 'SAIF_SURVEY_READY', version: VERSION });
       if (d.type === 'SAIF_SURVEY_UPLOAD' && d.payload) {
         const p = d.payload;
-        setS({ active: true, phase: 'login', step: 0, directTried: false, qm: null, saving: false, waitItemsTs: 0, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false,
+        setS({ active: true, phase: 'login', step: 0, directTried: false, navTries: 0, navTs: 0, qm: null, saving: false, waitItemsTs: 0, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false,
                data: { user: p.user, pass: p.pass, answers: p.answers, suggestion: p.suggestion } });
         if ('autoSave' in p) GM_setValue(O, Object.assign(opts(), { autoSave: !!p.autoSave }));
         prog(2, 'تم استلام الإجابات — سجّل الدخول في البوابة وسيبدأ الرفع تلقائيًا', 'user', 0);
@@ -243,7 +243,7 @@
     panel.querySelector('.go').onclick = () => {
       const s = getS();
       if (!s || !s.data || !s.data.answers) return render();
-      setS(Object.assign(s, { active: true, phase: findPassword(document) ? 'login' : 'nav', step: 0, directTried: false, qm: null, saving: false, waitItemsTs: 0, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false }));
+      setS(Object.assign(s, { active: true, phase: findPassword(document) ? 'login' : 'nav', step: 0, directTried: false, navTries: 0, navTs: 0, qm: null, saving: false, waitItemsTs: 0, stepTs: Date.now(), ts: Date.now(), itemsDone: false, sugDone: false }));
       prog(4, 'بدأ الرفع...');
     };
     panel.querySelector('.scan').onclick = () => {
@@ -513,10 +513,14 @@
 
     // 3) التنقل
     if (s.phase !== 'nav') return;
-    if (TOP && /QuestionaireMain\.aspx/i.test(location.pathname)) return qMain(s);
-    if (TOP && !s.directTried && s.step < 3) {
-      patch({ directTried: true, stepTs: Date.now() });
-      prog(12, 'جارٍ فتح صفحة «استبانات تطوير الأداء»...', 'info', 1);
+    if (!TOP) return; // التنقل من النافذة الرئيسية فقط (لا من الإطارات الداخلية المخفية)
+    if (/QuestionaireMain\.aspx/i.test(location.pathname)) return qMain(s);
+    // فتح صفحة «استبانات تطوير الأداء» مباشرة — مع إعادة المحاولة إذا أعادتنا البوابة للرئيسية
+    if (TOP && (s.navTries || 0) < 5) {
+      if (Date.now() - (s.navTs || 0) < 5000) return;
+      const n = (s.navTries || 0) + 1;
+      patch({ navTries: n, navTs: Date.now(), stepTs: Date.now(), step: 0 });
+      prog(12, n === 1 ? 'جارٍ فتح صفحة «استبانات تطوير الأداء»...' : `جارٍ فتح صفحة «استبانات تطوير الأداء» (محاولة ${n})...`, 'info', 1);
       location.href = Q_URL;
       return;
     }
@@ -558,7 +562,7 @@
       patch({ step: nx, stepTs: Date.now() });
       prog(8 + Math.round((nx / STEPS.length) * 18), STEPS[nx] ? `تم «${STEPS[done].name}» ✔ — التالي: «${STEPS[nx].name}»` : 'تم اختيار الاستمارة ✔ — جارٍ تحميل البنود...', 'info', nx >= STEPS.length ? 5 : uiOf(nx));
     } else if (elapsed > wait && TOP) {
-      prog(8 + Math.round((cur / STEPS.length) * 18), `لم أجد «${STEPS[cur].name}» — اضغطه بنفسك وسأكمل تلقائيًا`, 'user', uiOf(cur));
+      prog(8 + Math.round((cur / STEPS.length) * 18), `لم أجد «${STEPS[cur].name}» في هذه الصفحة — افتح «استبانات تطوير الأداء» بنفسك وسأكمل تلقائيًا`, 'user', uiOf(cur));
     }
   }
 })();
