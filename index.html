@@ -379,7 +379,7 @@ $('#today').textContent = new Date().toLocaleDateString('ar-OM',{year:'numeric',
 /* ===== الاتصال بأداة الرفع (Tampermonkey) ===== */
 let toolReady = false;
 const SCRIPT_URL = new URL('saif-survey.user.js', location.href).href;
-$('#installBtn').href = 'https://www.tampermonkey.net/script_installation.php#url=' + encodeURIComponent(SCRIPT_URL);
+$('#installBtn').href = SCRIPT_URL;
 $('#copyUrl').onclick = () => copyText(SCRIPT_URL).then(()=>toast('تم نسخ رابط الأداة'));
 function lock(){ document.body.classList.add('locked'); $('#setupModal').classList.add('show'); }
 function unlock(){ document.body.classList.remove('locked'); $('#setupModal').classList.remove('show'); }
